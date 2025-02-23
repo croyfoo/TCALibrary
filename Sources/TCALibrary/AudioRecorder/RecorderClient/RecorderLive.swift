@@ -17,6 +17,12 @@ extension RecorderClient: DependencyKey {
       },
       configure: { settings in
         await recorder.configure(settings)
+      },
+      pause: {
+        await recorder.pause()
+      },
+      resume: {
+        try await recorder.resume()
       }
     )
   }
@@ -24,13 +30,14 @@ extension RecorderClient: DependencyKey {
 
 private actor Recorder {
   private(set) var validAudio = false
-
+  
   var audioSession: AVAudioSession = .sharedInstance()
   var audioRecorder: AVAudioRecorder?
   var recorderContinuation: AsyncThrowingStream<RecorderClient.Action, Error>.Continuation?
   var audioFileID: String? = nil
   var configuration: RecorderClient.Configuration
   private var timerTask: Task<Void, Never>?
+  var currentTime: TimeInterval = 0
   
   init() {
     self.configuration = RecorderClient.Configuration.defaultConfig
@@ -85,7 +92,9 @@ private actor Recorder {
         try self.setupAudioRecorder(continuation)
         
         // Start the power level update timer
-        self.startPowerLevelTimer(continuation: continuation)
+        if configuration.monitorMeters {
+          self.startPowerLevelTimer(continuation: continuation)
+        }
       } catch {
         continuation.finish(throwing: error)
       }
@@ -95,17 +104,17 @@ private actor Recorder {
   private func startPowerLevelTimer(continuation: AsyncThrowingStream<RecorderClient.Action, Error>.Continuation) {
     // Cancel any existing timer before starting a new one
     timerTask?.cancel()
-    
+
     timerTask = Task {
-      while !Task.isCancelled {
+      while !Task.isCancelled, let audioRecorder {
         do {
           try await Task.sleep(for: .seconds(0.5))
-          audioRecorder?.updateMeters()
+          audioRecorder.updateMeters()
+          currentTime = audioRecorder.currentTime
           if configuration.monitorMeters {
-            if let power = audioRecorder?.averagePower(forChannel: 0) {
-              let currentAmplitude = 1 - pow(10, power / 20)
-              continuation.yield(.updatePowerLevel(currentAmplitude))
-            }
+            let power            = audioRecorder.averagePower(forChannel: 0)
+            let currentAmplitude = 1 - pow(10, power / 20)
+            continuation.yield(.updatePowerLevel(currentAmplitude, audioRecorder.currentTime))
           }
         } catch {
           break
@@ -147,12 +156,26 @@ private actor Recorder {
       throw RecorderClient.RecorderError.engineStartFailure
     }
   }
-
+  
   func requestAuthorization() async -> AVAudioApplication.recordPermission {
     await withCheckedContinuation { continuation in
       AVAudioApplication.requestRecordPermission { granted in
         continuation.resume(returning: granted ? .granted : .denied)
       }
     }
+  }
+  
+  func pause() {
+    audioRecorder?.pause()
+    recorderContinuation?.yield(.paused)
+  }
+  
+  func resume() async throws {
+    guard audioRecorder?.isRecording ?? false else {
+      throw RecorderClient.RecorderError.recordingNotStarted
+    }
+    
+    audioRecorder?.record()
+    recorderContinuation?.yield(.resumed)
   }
 }

@@ -15,6 +15,9 @@ struct RecorderClient {
   
   var configure: @Sendable (_ configuration: Configuration) async -> Void = { _ in }
   
+  var pause: @Sendable () async -> Void = { }
+  var resume: @Sendable () async throws -> Void = { }
+  
   struct Configuration: Equatable, Sendable {
     var audioSettings: [String: any Sendable]
     var category: AVAudioSession.Category
@@ -61,11 +64,14 @@ struct RecorderClient {
     case engineStartFailure
     case invalidAudioSession
     case recordingFailure
+    case recordingNotStarted
   }
   
   enum Action: Equatable {
+    case paused
+    case resumed
     case stopped(validAudio: Bool)
-    case updatePowerLevel(Float)
+    case updatePowerLevel(Float, TimeInterval)
   }
 }
 
@@ -83,11 +89,29 @@ extension RecorderClient: TestDependencyKey {
           continuation.finish()
         }
       },
-      configure: { _ in }
+      configure: { _ in },
+      pause: {
+        // Placeholder for pause function in preview
+      },
+      resume: {
+        // Placeholder for resume function in preview
+      }
     )
   }
   
-  static let testValue = Self()
+  static let testValue = Self(
+    finishTask: { },
+    requestAuthorization: { .granted },
+    startTask: { _ in .finished() },
+    configure: { _ in },
+    pause: {
+      // Placeholder for pause function in test
+    },
+    resume: {
+      // Placeholder for resume function in test
+      // Or simulate a simple action like updating a state if required
+    }
+  )
 }
 
 extension DependencyValues {
