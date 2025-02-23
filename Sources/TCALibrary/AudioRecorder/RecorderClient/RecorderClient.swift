@@ -3,32 +3,32 @@ import Speech
 import AVFAudio
 
 @DependencyClient
-struct RecorderClient {
-  var finishTask: @Sendable () async -> Void
-  var requestAuthorization: @Sendable () async -> AVAudioApplication.recordPermission = {
+public struct RecorderClient: Sendable {
+  public var finishTask: @Sendable () async -> Void
+  public var requestAuthorization: @Sendable () async -> AVAudioApplication.recordPermission = {
     .undetermined
   }
   
-  var startTask: @Sendable (_ audioFileID: String?) async -> AsyncThrowingStream<Action, Error> = {
+  public var startTask: @Sendable (_ audioFileID: String?) async -> AsyncThrowingStream<Action, Error> = {
     _ in .finished()
   }
   
-  var configure: @Sendable (_ configuration: Configuration) async -> Void = { _ in }
+  public var configure: @Sendable (_ configuration: Configuration) async -> Void = { _ in }
   
-  var pause: @Sendable () async -> Void = { }
-  var resume: @Sendable () async throws -> Void = { }
+  public var pause: @Sendable () async -> Void = { }
+  public var resume: @Sendable () async throws -> Void = { }
   
-  struct Configuration: Equatable, Sendable {
-    var audioSettings: [String: any Sendable]
-    var category: AVAudioSession.Category
-    var mode: AVAudioSession.Mode
-    var options: AVAudioSession.CategoryOptions
-    var monitorMeters: Bool
-    var audioFilePath: URL
+  public struct Configuration: Equatable, Sendable {
+    public var audioSettings: [String: any Sendable]
+    public var category: AVAudioSession.Category
+    public var mode: AVAudioSession.Mode
+    public var options: AVAudioSession.CategoryOptions
+    public var monitorMeters: Bool
+    public var audioFilePath: URL
     
-    init(audioSettings: [String : any Sendable]? = nil, category: AVAudioSession.Category? = nil,
-         mode: AVAudioSession.Mode? = nil, options: AVAudioSession.CategoryOptions? = nil,
-         monitorMeters: Bool? = nil, audioFilePath: URL? = nil) {
+    public init(audioSettings: [String : any Sendable]? = nil, category: AVAudioSession.Category? = nil,
+                mode: AVAudioSession.Mode? = nil, options: AVAudioSession.CategoryOptions? = nil,
+                monitorMeters: Bool? = nil, audioFilePath: URL? = nil) {
       self.audioSettings = audioSettings ?? Self.defaultConfig.audioSettings
       self.category      = category ?? Self.defaultConfig.category
       self.mode          = mode ?? Self.defaultConfig.mode
@@ -37,7 +37,7 @@ struct RecorderClient {
       self.audioFilePath = audioFilePath ?? Self.defaultConfig.audioFilePath
     }
     
-    static let defaultConfig = Configuration(
+    public static let defaultConfig = Configuration(
       audioSettings: [
         AVFormatIDKey: kAudioFormatMPEG4AAC,
         AVSampleRateKey: 44100.0,
@@ -51,7 +51,7 @@ struct RecorderClient {
       audioFilePath: URL.documentsDirectory.appendingPathComponent("recording.m4a")
     )
     
-    static func == (lhs: Configuration, rhs: Configuration) -> Bool {
+    public static func == (lhs: Configuration, rhs: Configuration) -> Bool {
       lhs.category      == rhs.category &&
       lhs.mode          == rhs.mode &&
       lhs.options       == rhs.options &&
@@ -60,14 +60,14 @@ struct RecorderClient {
     }
   }
   
-  enum RecorderError: Error {
+  public enum RecorderError: Error {
     case engineStartFailure
     case invalidAudioSession
     case recordingFailure
     case recordingNotStarted
   }
   
-  enum Action: Equatable {
+  public enum Action: Equatable, Sendable {
     case paused
     case resumed
     case stopped(validAudio: Bool)
@@ -76,7 +76,7 @@ struct RecorderClient {
 }
 
 extension RecorderClient: TestDependencyKey {
-  static var previewValue: Self {
+  public static var previewValue: Self {
     let isRecording = LockIsolated(false)
     
     return Self(
@@ -90,27 +90,18 @@ extension RecorderClient: TestDependencyKey {
         }
       },
       configure: { _ in },
-      pause: {
-        // Placeholder for pause function in preview
-      },
-      resume: {
-        // Placeholder for resume function in preview
-      }
+      pause: { },
+      resume: { }
     )
   }
   
-  static let testValue = Self(
+  public static let testValue = Self(
     finishTask: { },
     requestAuthorization: { .granted },
     startTask: { _ in .finished() },
     configure: { _ in },
-    pause: {
-      // Placeholder for pause function in test
-    },
-    resume: {
-      // Placeholder for resume function in test
-      // Or simulate a simple action like updating a state if required
-    }
+    pause: { },
+    resume: { }
   )
 }
 

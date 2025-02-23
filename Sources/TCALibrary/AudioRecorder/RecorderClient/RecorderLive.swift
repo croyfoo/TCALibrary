@@ -3,7 +3,7 @@ import Speech
 import AVFAudio
 
 extension RecorderClient: DependencyKey {
-  static var liveValue: Self {
+  public static var liveValue: Self {
     let recorder = Recorder()
     return Self(
       finishTask: {
@@ -104,7 +104,7 @@ private actor Recorder {
   private func startPowerLevelTimer(continuation: AsyncThrowingStream<RecorderClient.Action, Error>.Continuation) {
     // Cancel any existing timer before starting a new one
     timerTask?.cancel()
-
+    
     timerTask = Task {
       while !Task.isCancelled, let audioRecorder {
         do {
