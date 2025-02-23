@@ -2,7 +2,7 @@ import ComposableArchitecture
 import Speech
 import AVFAudio
 
-extension RecorderClient: DependencyKey {
+extension AudioRecorder: DependencyKey {
   public static var liveValue: Self {
     let recorder = Recorder()
     return Self(
@@ -33,17 +33,17 @@ private actor Recorder {
   
   var audioSession: AVAudioSession = .sharedInstance()
   var audioRecorder: AVAudioRecorder?
-  var recorderContinuation: AsyncThrowingStream<RecorderClient.Action, Error>.Continuation?
+  var recorderContinuation: AsyncThrowingStream<AudioRecorder.Action, Error>.Continuation?
   var audioFileID: String? = nil
-  var configuration: RecorderClient.Configuration
+  var configuration: AudioRecorder.Configuration
   private var timerTask: Task<Void, Never>?
   var currentTime: TimeInterval = 0
   
   init() {
-    self.configuration = RecorderClient.Configuration.defaultConfig
+    self.configuration = AudioRecorder.Configuration.defaultConfig
   }
   
-  func configure(_ configuration: RecorderClient.Configuration) {
+  func configure(_ configuration: AudioRecorder.Configuration) {
     self.configuration = configuration
   }
   
@@ -82,7 +82,7 @@ private actor Recorder {
     }
   }
   
-  func startTask(audioFileID: String? = nil) -> AsyncThrowingStream<RecorderClient.Action, Error> {
+  func startTask(audioFileID: String? = nil) -> AsyncThrowingStream<AudioRecorder.Action, Error> {
     self.audioFileID = audioFileID
     
     return AsyncThrowingStream { continuation in
@@ -101,7 +101,7 @@ private actor Recorder {
     }
   }
   
-  private func startPowerLevelTimer(continuation: AsyncThrowingStream<RecorderClient.Action, Error>.Continuation) {
+  private func startPowerLevelTimer(continuation: AsyncThrowingStream<AudioRecorder.Action, Error>.Continuation) {
     // Cancel any existing timer before starting a new one
     timerTask?.cancel()
     
@@ -129,11 +129,11 @@ private actor Recorder {
                                     options: configuration.options )
       try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
     } catch {
-      throw RecorderClient.RecorderError.invalidAudioSession
+      throw AudioRecorder.RecorderError.invalidAudioSession
     }
   }
   
-  private func setupAudioRecorder(_ continuation: AsyncThrowingStream<RecorderClient.Action, Error>.Continuation) throws {
+  private func setupAudioRecorder(_ continuation: AsyncThrowingStream<AudioRecorder.Action, Error>.Continuation) throws {
     do {
       self.audioRecorder = try AVAudioRecorder( url: configuration.audioFilePath,
                                                 settings: configuration.audioSettings )
@@ -150,10 +150,10 @@ private actor Recorder {
       
       guard self.audioRecorder?.prepareToRecord() == true,
             self.audioRecorder?.record() == true else {
-        throw RecorderClient.RecorderError.recordingFailure
+        throw AudioRecorder.RecorderError.recordingFailure
       }
     } catch {
-      throw RecorderClient.RecorderError.engineStartFailure
+      throw AudioRecorder.RecorderError.engineStartFailure
     }
   }
   
@@ -172,7 +172,7 @@ private actor Recorder {
   
   func resume() async throws {
     guard audioRecorder?.isRecording ?? false else {
-      throw RecorderClient.RecorderError.recordingNotStarted
+      throw AudioRecorder.RecorderError.recordingNotStarted
     }
     
     audioRecorder?.record()

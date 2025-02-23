@@ -3,7 +3,7 @@ import Speech
 import AVFAudio
 
 @DependencyClient
-public struct RecorderClient: Sendable {
+public struct AudioRecorder: Sendable {
   public var finishTask: @Sendable () async -> Void
   public var requestAuthorization: @Sendable () async -> AVAudioApplication.recordPermission = {
     .undetermined
@@ -75,7 +75,7 @@ public struct RecorderClient: Sendable {
   }
 }
 
-extension RecorderClient: TestDependencyKey {
+extension AudioRecorder: TestDependencyKey {
   public static var previewValue: Self {
     let isRecording = LockIsolated(false)
     
@@ -106,8 +106,8 @@ extension RecorderClient: TestDependencyKey {
 }
 
 extension DependencyValues {
-  var recorderClient: RecorderClient {
-    get { self[RecorderClient.self] }
-    set { self[RecorderClient.self] = newValue }
+  public var audioRecorder: AudioRecorder {
+    get { self[AudioRecorder.self] }
+    set { self[AudioRecorder.self] = newValue }
   }
 }
