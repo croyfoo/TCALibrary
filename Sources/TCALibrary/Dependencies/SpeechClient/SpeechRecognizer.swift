@@ -61,7 +61,7 @@ extension SpeechRecognizer: TestDependencyKey {
 }
 
 extension DependencyValues {
-  public var speechClient: SpeechRecognizer {
+  public var speechRecognizer: SpeechRecognizer {
     get { self[SpeechRecognizer.self] }
     set { self[SpeechRecognizer.self] = newValue }
   }
