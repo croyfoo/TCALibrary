@@ -8,8 +8,7 @@ public struct SpeechClient: Sendable {
     .notDetermined
   }
   
-  var startTask:
-  @Sendable (_ request: SFSpeechAudioBufferRecognitionRequest, _ audioFilePath: URL?) async -> AsyncThrowingStream<SpeechRecognitionResult, Error> = { _,_ in .finished() }
+  public var startTask: @Sendable (_ request: SFSpeechAudioBufferRecognitionRequest, _ audioFilePath: URL?) async -> AsyncThrowingStream<SpeechRecognitionResult, Error> = { _,_ in .finished() }
   
   public enum Failure: Error, Equatable, Sendable {
     case taskError
