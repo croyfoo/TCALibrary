@@ -3,15 +3,15 @@ import Speech
 
 @DependencyClient
 public struct SpeechClient: Sendable {
-  var finishTask: @Sendable () async -> Void
-  var requestAuthorization: @Sendable () async -> SFSpeechRecognizerAuthorizationStatus = {
+  public var finishTask: @Sendable () async -> Void
+  public var requestAuthorization: @Sendable () async -> SFSpeechRecognizerAuthorizationStatus = {
     .notDetermined
   }
   
   var startTask:
   @Sendable (_ request: SFSpeechAudioBufferRecognitionRequest, _ audioFilePath: URL?) async -> AsyncThrowingStream<SpeechRecognitionResult, Error> = { _,_ in .finished() }
   
-  enum Failure: Error, Equatable, Sendable {
+  public enum Failure: Error, Equatable, Sendable {
     case taskError
     case couldntStartAudioEngine
     case couldntConfigureAudioSession
