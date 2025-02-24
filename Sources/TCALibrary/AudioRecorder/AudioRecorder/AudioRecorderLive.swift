@@ -12,11 +12,8 @@ extension AudioRecorder: DependencyKey {
       requestAuthorization: {
         await recorder.requestAuthorization()
       },
-      startTask: { audioFileID in
-        return await recorder.startTask(audioFileID: audioFileID)
-      },
-      configure: { settings in
-        await recorder.configure(settings)
+      startTask: { configuration in
+        return await recorder.startTask(configuration: configuration)
       },
       pause: {
         await recorder.pause()
@@ -34,7 +31,6 @@ private actor Recorder {
   var audioSession: AVAudioSession = .sharedInstance()
   var audioRecorder: AVAudioRecorder?
   var recorderContinuation: AsyncThrowingStream<AudioRecorder.Action, Error>.Continuation?
-  var audioFileID: String? = nil
   var configuration: AudioRecorder.Configuration
   private var timerTask: Task<Void, Never>?
   var currentTime: TimeInterval = 0
@@ -82,8 +78,11 @@ private actor Recorder {
     }
   }
   
-  func startTask(audioFileID: String? = nil) -> AsyncThrowingStream<AudioRecorder.Action, Error> {
-    self.audioFileID = audioFileID
+  func startTask(configuration: AudioRecorder.Configuration? = nil) async -> AsyncThrowingStream<AudioRecorder.Action, Error> {
+
+    if let configuration {
+      self.configure(configuration)
+    }
     
     return AsyncThrowingStream { continuation in
       do {
@@ -92,7 +91,7 @@ private actor Recorder {
         try self.setupAudioRecorder(continuation)
         
         // Start the power level update timer
-        if configuration.monitorMeters {
+        if self.configuration.monitorMeters {
           self.startPowerLevelTimer(continuation: continuation)
         }
       } catch {
@@ -135,8 +134,8 @@ private actor Recorder {
   
   private func setupAudioRecorder(_ continuation: AsyncThrowingStream<AudioRecorder.Action, Error>.Continuation) throws {
     do {
-      self.audioRecorder = try AVAudioRecorder( url: configuration.audioFilePath,
-                                                settings: configuration.audioSettings )
+      let audioPath      = configuration.audioFilePath
+      self.audioRecorder = try AVAudioRecorder( url: audioPath, settings: configuration.audioSettings )
       self.audioRecorder?.isMeteringEnabled = true
       
       // Capture the current timerTask in a local variable

@@ -9,11 +9,9 @@ public struct AudioRecorder: Sendable {
     .undetermined
   }
   
-  public var startTask: @Sendable (_ audioFileID: String?) async -> AsyncThrowingStream<Action, Error> = {
+  public var startTask: @Sendable (_ configuration: Configuration?) async -> AsyncThrowingStream<Action, Error> = {
     _ in .finished()
   }
-  
-  public var configure: @Sendable (_ configuration: Configuration) async -> Void = { _ in }
   
   public var pause: @Sendable () async -> Void = { }
   public var resume: @Sendable () async throws -> Void = { }
@@ -48,7 +46,7 @@ public struct AudioRecorder: Sendable {
       mode: .measurement,
       options: .duckOthers,
       monitorMeters: true,
-      audioFilePath: URL.documentsDirectory.appendingPathComponent("recording.m4a")
+      audioFilePath: URL.documentsDirectory
     )
     
     public static func == (lhs: Configuration, rhs: Configuration) -> Bool {
@@ -89,7 +87,6 @@ extension AudioRecorder: TestDependencyKey {
           continuation.finish()
         }
       },
-      configure: { _ in },
       pause: { },
       resume: { }
     )
@@ -99,7 +96,6 @@ extension AudioRecorder: TestDependencyKey {
     finishTask: { },
     requestAuthorization: { .granted },
     startTask: { _ in .finished() },
-    configure: { _ in },
     pause: { },
     resume: { }
   )
