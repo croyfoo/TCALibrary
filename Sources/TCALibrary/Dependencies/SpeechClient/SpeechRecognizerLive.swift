@@ -1,7 +1,7 @@
 import ComposableArchitecture
 import Speech
 
-extension SpeechClient: DependencyKey {
+extension SpeechRecognizer: DependencyKey {
   public static var liveValue: Self {
     let speech = Speech()
     return Self (
@@ -64,7 +64,7 @@ private actor Speech {
       try audioSession.setCategory(.record, mode: .measurement, options: .duckOthers)
       try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
     } catch {
-      continuation.finish(throwing: SpeechClient.Failure.couldntConfigureAudioSession)
+      continuation.finish(throwing: SpeechRecognizer.Failure.couldntConfigureAudioSession)
       return
     }
     
@@ -74,7 +74,7 @@ private actor Speech {
       if let result {
         continuation.yield(UncheckedSendable(SpeechRecognitionResult(result)).wrappedValue)
       } else {
-        continuation.finish(throwing: SpeechClient.Failure.taskError)
+        continuation.finish(throwing: SpeechRecognizer.Failure.taskError)
       }
     }
     
@@ -110,7 +110,7 @@ private actor Speech {
     do {
       try self.audioEngine?.start()
     } catch {
-      continuation.finish(throwing: SpeechClient.Failure.couldntStartAudioEngine)
+      continuation.finish(throwing: SpeechRecognizer.Failure.couldntStartAudioEngine)
       return
     }
   }

@@ -2,7 +2,7 @@ import ComposableArchitecture
 import Speech
 
 @DependencyClient
-public struct SpeechClient: Sendable {
+public struct SpeechRecognizer: Sendable {
   public var finishTask: @Sendable () async -> Void
   public var requestAuthorization: @Sendable () async -> SFSpeechRecognizerAuthorizationStatus = {
     .notDetermined
@@ -18,7 +18,7 @@ public struct SpeechClient: Sendable {
   }
 }
 
-extension SpeechClient: TestDependencyKey {
+extension SpeechRecognizer: TestDependencyKey {
   public static var previewValue: Self {
     let isRecording = LockIsolated(false)
     
@@ -61,8 +61,8 @@ extension SpeechClient: TestDependencyKey {
 }
 
 extension DependencyValues {
-  public var speechClient: SpeechClient {
-    get { self[SpeechClient.self] }
-    set { self[SpeechClient.self] = newValue }
+  public var speechClient: SpeechRecognizer {
+    get { self[SpeechRecognizer.self] }
+    set { self[SpeechRecognizer.self] = newValue }
   }
 }
