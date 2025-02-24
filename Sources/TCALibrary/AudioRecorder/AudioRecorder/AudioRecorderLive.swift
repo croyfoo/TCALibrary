@@ -38,7 +38,9 @@ private actor Recorder {
   var configuration: AudioRecorder.Configuration
   private var timerTask: Task<Void, Never>?
   var currentTime: TimeInterval = 0
-  
+
+  var samples: [Float] = []
+
   init() {
     self.configuration = AudioRecorder.Configuration.defaultConfig
   }
@@ -48,13 +50,14 @@ private actor Recorder {
   }
   
   func finishTask() {
+    // Read current time for duration validation
+    let duration = audioRecorder?.currentTime ?? 0.0
+
     audioRecorder?.stop()
     
     // Ensure meters are updated after stopping
     audioRecorder?.updateMeters()
     
-    // Read current time for duration validation
-    let duration = audioRecorder?.currentTime ?? 0.0
     
     // Obtain current average and peak power levels
     let averagePower = audioRecorder?.averagePower(forChannel: 0) ?? -120.0
@@ -117,6 +120,7 @@ private actor Recorder {
           if configuration.monitorMeters {
             let power            = audioRecorder.averagePower(forChannel: 0)
             let currentAmplitude = 1 - pow(10, power / 20)
+            samples.append(currentAmplitude)
             continuation.yield(.updatePowerLevel(currentAmplitude, audioRecorder.currentTime))
           }
         } catch {
