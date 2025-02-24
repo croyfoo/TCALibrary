@@ -39,8 +39,6 @@ private actor Recorder {
   private var timerTask: Task<Void, Never>?
   var currentTime: TimeInterval = 0
 
-  var samples: [Float] = []
-
   init() {
     self.configuration = AudioRecorder.Configuration.defaultConfig
   }
@@ -77,11 +75,6 @@ private actor Recorder {
     
     // Cancel the timer when finishing recording
     timerTask?.cancel()
-    
-    // Clean up invalid recordings
-    if !validAudio {
-      try? FileManager.default.removeItem(atPath: configuration.audioFilePath.path())
-    }
   }
   
   func startTask(configuration: AudioRecorder.Configuration? = nil) async -> AsyncThrowingStream<AudioRecorder.Action, Error> {
@@ -119,7 +112,6 @@ private actor Recorder {
           if configuration.monitorMeters {
             let power            = audioRecorder.averagePower(forChannel: 0)
             let currentAmplitude = 1 - pow(10, power / 20)
-            samples.append(currentAmplitude)
             continuation.yield(.updatePowerLevel(currentAmplitude, audioRecorder.currentTime))
           }
         } catch {
