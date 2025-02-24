@@ -53,15 +53,14 @@ private actor Recorder {
     // Read current time for duration validation
     let duration = audioRecorder?.currentTime ?? 0.0
 
-    audioRecorder?.stop()
-    
     // Ensure meters are updated after stopping
     audioRecorder?.updateMeters()
-    
     
     // Obtain current average and peak power levels
     let averagePower = audioRecorder?.averagePower(forChannel: 0) ?? -120.0
     let peakPower    = audioRecorder?.peakPower(forChannel: 0) ?? -120.0
+
+    audioRecorder?.stop()
     
     // Define the thresholds (may need adjustment based on real-world testing)
     let minimumDuration: TimeInterval = 0.5
