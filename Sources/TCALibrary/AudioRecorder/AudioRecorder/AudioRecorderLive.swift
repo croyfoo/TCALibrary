@@ -54,7 +54,7 @@ private actor Recorder {
     let duration = audioRecorder?.currentTime ?? 0.0
 
     // Ensure meters are updated after stopping
-    audioRecorder?.updateMeters()
+//    audioRecorder?.updateMeters()
     
     // Obtain current average and peak power levels
     let averagePower = audioRecorder?.averagePower(forChannel: 0) ?? -120.0
