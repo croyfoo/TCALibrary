@@ -5,53 +5,41 @@ import Speech
 // them easier to use and test.
 
 public struct SpeechRecognitionMetadata: Equatable {
-  var averagePauseDuration: TimeInterval
-  var speakingRate: Double
-  var voiceAnalytics: VoiceAnalytics?
+  public var averagePauseDuration: TimeInterval
+  public var speakingRate: Double
+  public var voiceAnalytics: VoiceAnalytics?
 }
 
-// Your imports remain the same
-
-// Add Sendable conformance to SpeechRecognitionResult
-//@preconcurrency struct SpeechRecognitionResult: Sendable {
-//  let result: SFSpeechRecognitionResult
-//  
-//  init(_ result: SFSpeechRecognitionResult) {
-//    self.result = result
-//  }
-//}
-
-// Rest of Speech actor and SpeechClient implementation remains the same
 @preconcurrency public struct SpeechRecognitionResult: Equatable {
-  var bestTranscription: Transcription
-  var isFinal: Bool
-  var speechRecognitionMetadata: SpeechRecognitionMetadata?
-  var transcriptions: [Transcription]
+  public var bestTranscription: Transcription
+  public var isFinal: Bool
+  public var speechRecognitionMetadata: SpeechRecognitionMetadata?
+  public var transcriptions: [Transcription]
 }
 
 public struct Transcription: Equatable {
-  var formattedString: String
-  var segments: [TranscriptionSegment]
+  public var formattedString: String
+  public var segments: [TranscriptionSegment]
 }
 
 public struct TranscriptionSegment: Equatable {
-  var alternativeSubstrings: [String]
-  var confidence: Float
-  var duration: TimeInterval
-  var substring: String
-  var timestamp: TimeInterval
+  public var alternativeSubstrings: [String]
+  public var confidence: Float
+  public var duration: TimeInterval
+  public var substring: String
+  public var timestamp: TimeInterval
 }
 
 public struct VoiceAnalytics: Equatable {
-  var jitter: AcousticFeature
-  var pitch: AcousticFeature
-  var shimmer: AcousticFeature
-  var voicing: AcousticFeature
+  public var jitter: AcousticFeature
+  public var pitch: AcousticFeature
+  public var shimmer: AcousticFeature
+  public var voicing: AcousticFeature
 }
 
 public struct AcousticFeature: Equatable {
-  var acousticFeatureValuePerFrame: [Double]
-  var frameDuration: TimeInterval
+  public var acousticFeatureValuePerFrame: [Double]
+  public var frameDuration: TimeInterval
 }
 
 extension SpeechRecognitionMetadata {
