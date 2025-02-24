@@ -6,15 +6,19 @@ extension AudioRecorder: DependencyKey {
   public static var liveValue: Self {
     let recorder = Recorder()
     return Self(
+
       finishTask: {
         await recorder.finishTask()
       },
+
       requestAuthorization: {
         await recorder.requestAuthorization()
       },
+
       startTask: { configuration in
         return await recorder.startTask(configuration: configuration)
       },
+
       pause: {
         await recorder.pause()
       },
@@ -58,8 +62,8 @@ private actor Recorder {
     
     // Define the thresholds (may need adjustment based on real-world testing)
     let minimumDuration: TimeInterval = 0.5
-    let averagePowerThreshold: Float = -50.0
-    let peakPowerThreshold: Float = -40.0
+    let averagePowerThreshold: Float  = -50.0
+    let peakPowerThreshold: Float     = -40.0
     
     // Determine if audio is valid based on duration and power levels
     validAudio = (duration >= minimumDuration) &&
@@ -107,7 +111,7 @@ private actor Recorder {
     timerTask = Task {
       while !Task.isCancelled, let audioRecorder {
         do {
-          try await Task.sleep(for: .seconds(0.5))
+          try await Task.sleep(for: .seconds(0.005))
           audioRecorder.updateMeters()
           currentTime = audioRecorder.currentTime
           if configuration.monitorMeters {
@@ -166,6 +170,7 @@ private actor Recorder {
   
   func pause() {
     audioRecorder?.pause()
+    timerTask?.cancel()
     recorderContinuation?.yield(.paused)
   }
   
@@ -175,6 +180,7 @@ private actor Recorder {
     }
     
     audioRecorder?.record()
+    startPowerLevelTimer(continuation: recorderContinuation!)
     recorderContinuation?.yield(.resumed)
   }
 }
