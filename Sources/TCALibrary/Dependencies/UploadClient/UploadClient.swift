@@ -9,40 +9,39 @@ import ComposableArchitecture
 import Foundation
 
 @DependencyClient
-struct UploadClient {
-  var upload: @Sendable (_ request: URLRequest) -> AsyncThrowingStream<Event, Error> = { _ in .finished() }
+public struct UploadClient: @unchecked Sendable {
+  public var upload: @Sendable (_ request: URLRequest) -> AsyncThrowingStream<Event, Error> = { _ in .finished() }
   
   @CasePathable
-  enum Event: Equatable {
+  public enum Event: Equatable {
     case response(Data)
     case progress(Double)
   }
 }
 
 extension DependencyValues {
-  var uploadClient: UploadClient {
+  public var uploadClient: UploadClient {
     get { self[UploadClient.self] }
     set { self[UploadClient.self] = newValue }
   }
 }
 
 extension UploadClient: DependencyKey {
-  static let liveValue = Self(
+  public static let liveValue = Self(
     upload: { request in
-        .init { continuation in
-          Task {
-            do {
-              let (data, response) = try await URLSession.shared.data(for: request)
-              continuation.yield(.response(data))
-//              continuation.yield(.uploadResponse)
-              continuation.finish()
-            } catch {
-              continuation.finish(throwing: error)
-            }
+      AsyncThrowingStream<Event, Error>(bufferingPolicy: .unbounded) { continuation in
+        Task {
+          do {
+            let (data, _) = try await URLSession.shared.data(for: request)
+            continuation.yield(.response(data))
+            continuation.finish()
+          } catch {
+            continuation.finish(throwing: error)
           }
         }
+      }
     }
   )
   
-  static let testValue = Self()
+  public static let testValue = Self()
 }
