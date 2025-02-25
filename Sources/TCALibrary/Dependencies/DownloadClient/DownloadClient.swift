@@ -3,7 +3,7 @@ import Foundation
 
 @DependencyClient
 public struct DownloadClient: @unchecked Sendable {
-  public var download: @Sendable (_ url: URLRequest, _ showProgress: Bool ) -> AsyncThrowingStream<Event, Error> = {
+  public var download: @Sendable (_ urlRequest: URLRequest, _ showProgress: Bool ) -> AsyncThrowingStream<Event, Error> = {
     _,_ in .finished()
   }
   
@@ -53,7 +53,7 @@ extension DownloadClient: DependencyKey {
 }
 
 extension DownloadClient {
-  public func download( _ url: URLRequest, showProgress: Bool = false ) -> AsyncThrowingStream<Event, Error> {
-    self.download(url, showProgress)
+  public func download( _ urlRequest: URLRequest, showProgress: Bool = false ) -> AsyncThrowingStream<Event, Error> {
+    self.download(urlRequest, showProgress)
   }
 }
