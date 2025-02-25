@@ -4,25 +4,25 @@ import Speech
 // and so they aren't testable out the box. We define struct versions of those types to make
 // them easier to use and test.
 
-public struct SpeechRecognitionMetadata: Equatable, Sendable {
+public struct SpeechRecognitionMetadataFoo: Equatable, Sendable {
   public var averagePauseDuration: TimeInterval
   public var speakingRate: Double
-  public var voiceAnalytics: VoiceAnalytics?
+  public var voiceAnalytics: VoiceAnalyticsFoo?
 }
 
-@preconcurrency public struct SpeechRecognitionResult: Equatable, Sendable {
-  public var bestTranscription: Transcription
+@preconcurrency public struct SpeechRecognitionResultFoo: Equatable, Sendable {
+  public var bestTranscription: TranscriptionFoo
   public var isFinal: Bool
-  public var speechRecognitionMetadata: SpeechRecognitionMetadata?
-  public var transcriptions: [Transcription]
+  public var speechRecognitionMetadata: SpeechRecognitionMetadataFoo?
+  public var transcriptions: [TranscriptionFoo]
 }
 
-public struct Transcription: Equatable, Sendable {
+public struct TranscriptionFoo: Equatable, Sendable {
   public var formattedString: String
-  public var segments: [TranscriptionSegment]
+  public var segments: [TranscriptionSegmentFoo]
 }
 
-public struct TranscriptionSegment: Equatable, Sendable {
+public struct TranscriptionSegmentFoo: Equatable, Sendable {
   public var alternativeSubstrings: [String]
   public var confidence: Float
   public var duration: TimeInterval
@@ -30,44 +30,44 @@ public struct TranscriptionSegment: Equatable, Sendable {
   public var timestamp: TimeInterval
 }
 
-public struct VoiceAnalytics: Equatable, Sendable {
-  public var jitter: AcousticFeature
-  public var pitch: AcousticFeature
-  public var shimmer: AcousticFeature
-  public var voicing: AcousticFeature
+public struct VoiceAnalyticsFoo: Equatable, Sendable {
+  public var jitter: AcousticFeatureFoo
+  public var pitch: AcousticFeatureFoo
+  public var shimmer: AcousticFeatureFoo
+  public var voicing: AcousticFeatureFoo
 }
 
-public struct AcousticFeature: Equatable, Sendable {
+public struct AcousticFeatureFoo: Equatable, Sendable {
   public var acousticFeatureValuePerFrame: [Double]
   public var frameDuration: TimeInterval
 }
 
-extension SpeechRecognitionMetadata {
+extension SpeechRecognitionMetadataFoo {
   init(_ speechRecognitionMetadata: SFSpeechRecognitionMetadata) {
     self.averagePauseDuration = speechRecognitionMetadata.averagePauseDuration
     self.speakingRate = speechRecognitionMetadata.speakingRate
-    self.voiceAnalytics = speechRecognitionMetadata.voiceAnalytics.map(VoiceAnalytics.init)
+    self.voiceAnalytics = speechRecognitionMetadata.voiceAnalytics.map(VoiceAnalyticsFoo.init)
   }
 }
 
-extension SpeechRecognitionResult {
+extension SpeechRecognitionResultFoo {
   init(_ speechRecognitionResult: SFSpeechRecognitionResult) {
-    self.bestTranscription = Transcription(speechRecognitionResult.bestTranscription)
+    self.bestTranscription = TranscriptionFoo(speechRecognitionResult.bestTranscription)
     self.isFinal = speechRecognitionResult.isFinal
     self.speechRecognitionMetadata = speechRecognitionResult.speechRecognitionMetadata
-      .map(SpeechRecognitionMetadata.init)
-    self.transcriptions = speechRecognitionResult.transcriptions.map(Transcription.init)
+      .map(SpeechRecognitionMetadataFoo.init)
+    self.transcriptions = speechRecognitionResult.transcriptions.map(TranscriptionFoo.init)
   }
 }
 
-extension Transcription {
+extension TranscriptionFoo {
   init(_ transcription: SFTranscription) {
     self.formattedString = transcription.formattedString
-    self.segments = transcription.segments.map(TranscriptionSegment.init)
+    self.segments = transcription.segments.map(TranscriptionSegmentFoo.init)
   }
 }
 
-extension TranscriptionSegment {
+extension TranscriptionSegmentFoo {
   init(_ transcriptionSegment: SFTranscriptionSegment) {
     self.alternativeSubstrings = transcriptionSegment.alternativeSubstrings
     self.confidence = transcriptionSegment.confidence
@@ -77,16 +77,16 @@ extension TranscriptionSegment {
   }
 }
 
-extension VoiceAnalytics {
+extension VoiceAnalyticsFoo {
   init(_ voiceAnalytics: SFVoiceAnalytics) {
-    self.jitter = AcousticFeature(voiceAnalytics.jitter)
-    self.pitch = AcousticFeature(voiceAnalytics.pitch)
-    self.shimmer = AcousticFeature(voiceAnalytics.shimmer)
-    self.voicing = AcousticFeature(voiceAnalytics.voicing)
+    self.jitter = AcousticFeatureFoo(voiceAnalytics.jitter)
+    self.pitch = AcousticFeatureFoo(voiceAnalytics.pitch)
+    self.shimmer = AcousticFeatureFoo(voiceAnalytics.shimmer)
+    self.voicing = AcousticFeatureFoo(voiceAnalytics.voicing)
   }
 }
 
-extension AcousticFeature {
+extension AcousticFeatureFoo {
   init(_ acousticFeature: SFAcousticFeature) {
     self.acousticFeatureValuePerFrame = acousticFeature.acousticFeatureValuePerFrame
     self.frameDuration = acousticFeature.frameDuration

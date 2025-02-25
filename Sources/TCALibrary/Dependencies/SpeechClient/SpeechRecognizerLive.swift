@@ -1,7 +1,7 @@
 import ComposableArchitecture
 import Speech
 
-extension SpeechRecognizer: DependencyKey {
+extension SpeechRecognizerBeta: DependencyKey {
   public static var liveValue: Self {
     let speech = Speech()
     return Self (
@@ -29,7 +29,7 @@ private actor Speech {
   var audioSession: AVAudioSession = .sharedInstance()
   var audioEngine: AVAudioEngine?               = nil
   var recognitionTask: SFSpeechRecognitionTask? = nil
-  var recognitionContinuation: AsyncThrowingStream<SpeechRecognitionResult, any Error>.Continuation?
+  var recognitionContinuation: AsyncThrowingStream<SpeechRecognitionResultFoo, any Error>.Continuation?
   
   private var audioFile: AVAudioFile?
   private var request: SFSpeechAudioBufferRecognitionRequest?
@@ -42,40 +42,40 @@ private actor Speech {
     self.recognitionTask = nil
   }
   
-//  func startTask( request: UncheckedSendable<SFSpeechAudioBufferRecognitionRequest>,
+  //  func startTask( request: UncheckedSendable<SFSpeechAudioBufferRecognitionRequest>,
   func startTask( request: SFSpeechAudioBufferRecognitionRequest,
-                  audioFilePath: URL? = nil ) -> AsyncThrowingStream<SpeechRecognitionResult, any Error> {
+                  audioFilePath: URL? = nil ) -> AsyncThrowingStream<SpeechRecognitionResultFoo, any Error> {
     self.request = request
     self.audioFilePath = audioFilePath
     
     return AsyncThrowingStream { continuation in
-//      await handleContinuationSetup(continuation)
+      //      await handleContinuationSetup(continuation)
       self.handleContinuationSetup(continuation)
     }
   }
-
-//  func startTask( request: UncheckedSendable<SFSpeechAudioBufferRecognitionRequest>,
-//                  audioFilePath: URL? = nil ) -> UncheckedSendable<AsyncThrowingStream<SpeechRecognitionResult, any Error>> {
-//    self.request = request.wrappedValue
-//    self.audioFilePath = audioFilePath
-//    
-//    let stream = AsyncThrowingStream { @Sendable continuation in
-//      Task { [self] in
-//        await handleContinuationSetup(continuation)
-//      }
-//    }
-//    
-//    return UncheckedSendable(stream)
-//  }
   
-  private func handleContinuationSetup(_ continuation: AsyncThrowingStream<SpeechRecognitionResult, any Error>.Continuation) {
+  //  func startTask( request: UncheckedSendable<SFSpeechAudioBufferRecognitionRequest>,
+  //                  audioFilePath: URL? = nil ) -> UncheckedSendable<AsyncThrowingStream<SpeechRecognitionResult, any Error>> {
+  //    self.request = request.wrappedValue
+  //    self.audioFilePath = audioFilePath
+  //
+  //    let stream = AsyncThrowingStream { @Sendable continuation in
+  //      Task { [self] in
+  //        await handleContinuationSetup(continuation)
+  //      }
+  //    }
+  //
+  //    return UncheckedSendable(stream)
+  //  }
+  
+  private func handleContinuationSetup(_ continuation: AsyncThrowingStream<SpeechRecognitionResultFoo, any Error>.Continuation) {
     self.recognitionContinuation = continuation
     let audioSession = AVAudioSession.sharedInstance()
     do {
       try audioSession.setCategory(.record, mode: .measurement, options: .duckOthers)
       try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
     } catch {
-      continuation.finish(throwing: SpeechRecognizer.Failure.couldntConfigureAudioSession)
+      continuation.finish(throwing: SpeechRecognizerBeta.Failure.couldntConfigureAudioSession)
       return
     }
     
@@ -83,9 +83,9 @@ private actor Speech {
     let speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))!
     self.recognitionTask = speechRecognizer.recognitionTask(with: self.request!) { result, error in
       if let result {
-        continuation.yield(UncheckedSendable(SpeechRecognitionResult(result)).wrappedValue)
+        continuation.yield(UncheckedSendable(SpeechRecognitionResultFoo(result)).wrappedValue)
       } else {
-        continuation.finish(throwing: SpeechRecognizer.Failure.taskError)
+        continuation.finish(throwing: SpeechRecognizerBeta.Failure.taskError)
       }
     }
     
@@ -121,7 +121,7 @@ private actor Speech {
     do {
       try self.audioEngine?.start()
     } catch {
-      continuation.finish(throwing: SpeechRecognizer.Failure.couldntStartAudioEngine)
+      continuation.finish(throwing: SpeechRecognizerBeta.Failure.couldntStartAudioEngine)
       return
     }
   }
