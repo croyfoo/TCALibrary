@@ -17,8 +17,7 @@ extension SpeechRecognizer: DependencyKey {
       },
       startTask: { request, audioFilePath in
         let request = UncheckedSendable(request)
-        let wrappedStream = await speech.startTask(request: request, audioFilePath: audioFilePath)
-        return wrappedStream.wrappedValue
+        return await speech.startTask(request: request.wrappedValue, audioFilePath: audioFilePath)
       }
     )
   }
@@ -43,21 +42,33 @@ private actor Speech {
     self.recognitionTask = nil
   }
   
-  func startTask( request: UncheckedSendable<SFSpeechAudioBufferRecognitionRequest>,
-                  audioFilePath: URL? = nil ) -> UncheckedSendable<AsyncThrowingStream<SpeechRecognitionResult, any Error>> {
-    self.request = request.wrappedValue
+//  func startTask( request: UncheckedSendable<SFSpeechAudioBufferRecognitionRequest>,
+  func startTask( request: SFSpeechAudioBufferRecognitionRequest,
+                  audioFilePath: URL? = nil ) -> AsyncThrowingStream<SpeechRecognitionResult, any Error> {
+    self.request = request
     self.audioFilePath = audioFilePath
     
-    let stream = AsyncThrowingStream { @Sendable continuation in
-      Task { [self] in
-        await handleContinuationSetup(continuation)
-      }
+    return AsyncThrowingStream { continuation in
+//      await handleContinuationSetup(continuation)
+      self.handleContinuationSetup(continuation)
     }
-    
-    return UncheckedSendable(stream)
   }
+
+//  func startTask( request: UncheckedSendable<SFSpeechAudioBufferRecognitionRequest>,
+//                  audioFilePath: URL? = nil ) -> UncheckedSendable<AsyncThrowingStream<SpeechRecognitionResult, any Error>> {
+//    self.request = request.wrappedValue
+//    self.audioFilePath = audioFilePath
+//    
+//    let stream = AsyncThrowingStream { @Sendable continuation in
+//      Task { [self] in
+//        await handleContinuationSetup(continuation)
+//      }
+//    }
+//    
+//    return UncheckedSendable(stream)
+//  }
   
-  private func handleContinuationSetup(_ continuation: AsyncThrowingStream<SpeechRecognitionResult, any Error>.Continuation) async {
+  private func handleContinuationSetup(_ continuation: AsyncThrowingStream<SpeechRecognitionResult, any Error>.Continuation) {
     self.recognitionContinuation = continuation
     let audioSession = AVAudioSession.sharedInstance()
     do {
