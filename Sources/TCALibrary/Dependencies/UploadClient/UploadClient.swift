@@ -13,7 +13,7 @@ public struct UploadClient: @unchecked Sendable {
   public var upload: @Sendable (_ request: URLRequest) -> AsyncThrowingStream<Event, Error> = { _ in .finished() }
   
   @CasePathable
-  public enum Event: Equatable {
+  public enum Event: Equatable, Sendable {
     case response(Data)
     case progress(Double)
   }

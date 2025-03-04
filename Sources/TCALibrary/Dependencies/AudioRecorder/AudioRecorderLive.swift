@@ -77,7 +77,7 @@ private actor Recorder {
     timerTask?.cancel()
   }
   
-  func startTask(configuration: AudioRecorder.Configuration? = nil) async -> AsyncThrowingStream<AudioRecorder.Action, Error> {
+  func startTask(configuration: AudioRecorder.Configuration? = nil) -> AsyncThrowingStream<AudioRecorder.Action, Error> {
 
     if let configuration {
       self.configure(configuration)
