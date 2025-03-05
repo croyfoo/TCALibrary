@@ -47,7 +47,7 @@ private actor Recorder {
     self.configuration = configuration
   }
   
-  func finishTask() {
+  func finishTask() -> AsyncThrowingStream<AudioRecorder.Action, Error> {
     // Read current time for duration validation
     let duration = audioRecorder?.currentTime ?? 0.0
 
@@ -60,21 +60,26 @@ private actor Recorder {
 
     audioRecorder?.stop()
     
-    // Define the thresholds (may need adjustment based on real-world testing)
-    let minimumDuration: TimeInterval = 0.5
-    let averagePowerThreshold: Float  = -50.0
-    let peakPowerThreshold: Float     = -40.0
-    
-    // Determine if audio is valid based on duration and power levels
-    validAudio = (duration >= minimumDuration) &&
-    (averagePower > averagePowerThreshold || peakPower > peakPowerThreshold)
-    
-    // Send the stopped action with validation status
-    recorderContinuation?.yield(.stopped(validAudio: validAudio))
-    recorderContinuation?.finish()
-    
-    // Cancel the timer when finishing recording
-    timerTask?.cancel()
+    return AsyncThrowingStream { continuation in
+      self.recorderContinuation = continuation
+      // Define the thresholds (may need adjustment based on real-world testing)
+      let minimumDuration: TimeInterval = 0.5
+      let averagePowerThreshold: Float  = -50.0
+      let peakPowerThreshold: Float     = -40.0
+      
+      // Determine if audio is valid based on duration and power levels
+      validAudio = (duration >= minimumDuration) &&
+      (averagePower > averagePowerThreshold || peakPower > peakPowerThreshold)
+      
+      // Send the stopped action with validation status
+      continuation.yield(.stopped(validAudio: validAudio))
+      continuation.finish()
+      //    recorderContinuation?.yield(.stopped(validAudio: validAudio))
+      //    recorderContinuation?.finish()
+      
+      // Cancel the timer when finishing recording
+      timerTask?.cancel()
+    }
   }
   
   func startTask(configuration: AudioRecorder.Configuration? = nil) -> AsyncThrowingStream<AudioRecorder.Action, Error> {

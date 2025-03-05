@@ -4,7 +4,7 @@ import AVFAudio
 
 @DependencyClient
 public struct AudioRecorder: Sendable {
-  public var finishTask: @Sendable () async -> Void
+  public var finishTask: @Sendable () async -> AsyncThrowingStream<Action, Error> = { .finished() }
   public var requestAuthorization: @Sendable () async -> AVAudioApplication.recordPermission = {
     .undetermined
   }
@@ -78,7 +78,14 @@ extension AudioRecorder: TestDependencyKey {
     let isRecording = LockIsolated(false)
     
     return Self(
-      finishTask: { isRecording.setValue(false) },
+      finishTask: {
+        isRecording.setValue(false)
+        // Return a finished stream with a stopped action
+        return AsyncThrowingStream<Action, Error> { continuation in
+          continuation.yield(.stopped(validAudio: true))
+          continuation.finish()
+        }
+      },
       requestAuthorization: { .granted },
       startTask: { audioFileID in
         AsyncThrowingStream { continuation in
@@ -93,7 +100,13 @@ extension AudioRecorder: TestDependencyKey {
   }
   
   public static let testValue = Self(
-    finishTask: { },
+    finishTask: { 
+      // Return a finished stream with a stopped action instead of Void
+      return AsyncThrowingStream<Action, Error> { continuation in
+        continuation.yield(.stopped(validAudio: true))
+        continuation.finish()
+      }
+    },
     requestAuthorization: { .granted },
     startTask: { _ in .finished() },
     pause: { },
