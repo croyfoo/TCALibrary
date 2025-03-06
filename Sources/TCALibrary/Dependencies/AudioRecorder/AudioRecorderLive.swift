@@ -6,19 +6,19 @@ extension AudioRecorder: DependencyKey {
   public static var liveValue: Self {
     let recorder = Recorder()
     return Self(
-
+      
       finishTask: {
         await recorder.finishTask()
       },
-
+      
       requestAuthorization: {
         await recorder.requestAuthorization()
       },
-
+      
       startTask: { configuration in
         return await recorder.startTask(configuration: configuration)
       },
-
+      
       pause: {
         await recorder.pause()
       },
@@ -38,7 +38,7 @@ private actor Recorder {
   var configuration: AudioRecorder.Configuration
   private var timerTask: Task<Void, Never>?
   var currentTime: TimeInterval = 0
-
+  
   init() {
     self.configuration = AudioRecorder.Configuration.defaultConfig
   }
@@ -50,14 +50,14 @@ private actor Recorder {
   func finishTask() -> AsyncThrowingStream<AudioRecorder.Action, Error> {
     // Read current time for duration validation
     let duration = audioRecorder?.currentTime ?? 0.0
-
+    
     // Ensure meters are updated after stopping
-//    audioRecorder?.updateMeters()
+    //    audioRecorder?.updateMeters()
     
     // Obtain current average and peak power levels
     let averagePower = audioRecorder?.averagePower(forChannel: 0) ?? -120.0
     let peakPower    = audioRecorder?.peakPower(forChannel: 0) ?? -120.0
-
+    
     audioRecorder?.stop()
     
     return AsyncThrowingStream { continuation in
@@ -83,7 +83,7 @@ private actor Recorder {
   }
   
   func startTask(configuration: AudioRecorder.Configuration? = nil) -> AsyncThrowingStream<AudioRecorder.Action, Error> {
-
+    
     if let configuration {
       self.configure(configuration)
     }
@@ -161,11 +161,19 @@ private actor Recorder {
   }
   
   func requestAuthorization() async -> AVAudioApplication.recordPermission {
-    await withCheckedContinuation { continuation in
-      AVAudioApplication.requestRecordPermission { granted in
-        continuation.resume(returning: granted ? .granted : .denied)
+    // Get the current permission status
+    let currentPermission = AVAudioApplication.shared.recordPermission
+    // If permission is undetermined, request it
+    if currentPermission == .undetermined {
+      return await withCheckedContinuation { continuation in
+        AVAudioApplication.requestRecordPermission { granted in
+          continuation.resume(returning: (granted ? .granted : .denied)) //.granted)
+        }
       }
     }
+    
+    // Otherwise return the current permission status
+    return currentPermission
   }
   
   func pause() {
