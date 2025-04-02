@@ -8,21 +8,21 @@
 import SwiftUI
 
 public struct ValidatableFieldView<Value, Content>: View where Content: View {
-    @Binding var field: ValidatableField<Value>
+  @Binding var field: ValidatableField<Value>
 
-    let content: (Binding<Value>) -> Content
+  let content: (Binding<Value>) -> Content
 
-    public var body: some View {
-        VStack(alignment: .leading) {
-            content($field.value)
+  public init(field: Binding<ValidatableField<Value>>, @ViewBuilder content: @escaping (Binding<Value>) -> Content) {
+    self._field  = field
+    self.content = content
+  }
 
-            if let errorText = field.errorText {
-                Text(errorText)
-                    .lineLimit(2)
-                    .foregroundStyle(.red)
-            }
-        }
+  public var body: some View {
+    VStack(alignment: .leading, spacing: .zero) {
+      content($field.value)
+        .embedInErrorMessage(field.errorText)
     }
+  }
 }
 
 #Preview("No error") {
