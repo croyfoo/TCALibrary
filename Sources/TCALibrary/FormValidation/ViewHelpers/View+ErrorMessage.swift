@@ -8,15 +8,15 @@
 import SwiftUI
 
 extension View {
-    func embedInErrorMessage(_ errorMessage: String?) -> some View {
-        VStack(alignment: .leading) {
-            self
-
-            if let errorMessage {
-                Text(errorMessage)
-                    .lineLimit(2)
-                    .foregroundStyle(.red)
-            }
+    public func embedInErrorMessage(_ errorMessage: String?) -> some View {
+      VStack(alignment: .leading) {
+        self
+        
+        if let errorMessage {
+          Text(errorMessage)
+            .lineLimit(2)
+            .foregroundStyle(.red)
         }
+      }
     }
 }
