@@ -63,17 +63,10 @@ where State == ViewAction.State, ViewAction: BindableAction {
     ///    - onFormValidatedAction: The action to be sent by the reducer when the validation
     ///    triggered by the `submitAction` succeed
     ///    - validations: The set of fields to validate by the reducer
-    public init(
-        submitAction: CaseKeyPath<ViewAction, Void>,
-        onFormValidatedAction: Action,
-        validations: [FieldValidation<State>]
-    ) where Action == ViewAction {
-        self.init(
-            viewAction: { $0 },
-            submitAction: submitAction,
-            onFormValidatedAction: onFormValidatedAction,
-            validations: validations
-        )
+    public init( submitAction: CaseKeyPath<ViewAction, Void>, onFormValidatedAction: Action,
+                 validations: [FieldValidation<State>] ) where Action == ViewAction {
+      self.init( viewAction: { $0 }, submitAction: submitAction,
+                 onFormValidatedAction: onFormValidatedAction, validations: validations )
     }
 
     /// Creates a ``FormValidationReducer``,
@@ -89,12 +82,11 @@ where State == ViewAction.State, ViewAction: BindableAction {
     ///    - validations: The set of fields to validate by the reducer
     public init( viewAction toViewAction: @escaping (_ action: Action) -> ViewAction?,
                  submitAction: CaseKeyPath<ViewAction, Void>,
-                 onFormValidatedAction: Action,
-                 validations: [FieldValidation<State>] ) {
-        self.toViewAction = toViewAction
-        self.submitAction = submitAction
+                 onFormValidatedAction: Action, validations: [FieldValidation<State>] ) {
+        self.toViewAction          = toViewAction
+        self.submitAction          = submitAction
         self.onFormValidatedAction = onFormValidatedAction
-        self.validations = validations
+        self.validations           = validations
     }
 
     public func reduce(into state: inout State, action: Action) -> Effect<Action> {
@@ -105,9 +97,9 @@ where State == ViewAction.State, ViewAction: BindableAction {
             return didSucceed ? .send(onFormValidatedAction) : .none
         }
 
-//        if let validation = getFirstValidation(for: action) {
-//            validation.validate(state: &state)
-//        }
+        if let validation = getFirstValidation(for: action) {
+            validation.validate(state: &state)
+        }
 
         return .none
     }
@@ -135,17 +127,9 @@ extension FormValidationReducer {
     ///    - onFormValidatedAction: The action to be sent by the reducer
     ///    when the validation triggered by the `submitAction` succeed
     ///    - validations: The set of fields to validate by the reducer
-    public init(
-        viewAction toViewAction: CaseKeyPath<Action, ViewAction>,
-        submitAction: CaseKeyPath<ViewAction, Void>,
-        onFormValidatedAction: Action,
-        validations: [FieldValidation<State>]
-    ) where Action: CasePathable {
-        self.init(
-            viewAction: { $0[case: toViewAction] },
-            submitAction: submitAction,
-            onFormValidatedAction: onFormValidatedAction,
-            validations: validations
-        )
+    public init( viewAction toViewAction: CaseKeyPath<Action, ViewAction>, submitAction: CaseKeyPath<ViewAction, Void>,
+        onFormValidatedAction: Action, validations: [FieldValidation<State>] ) where Action: CasePathable {
+        self.init( viewAction: { $0[case: toViewAction] }, submitAction: submitAction,
+                   onFormValidatedAction: onFormValidatedAction, validations: validations )
     }
 }
