@@ -34,6 +34,8 @@ public extension ValidationRule {
   static func nonOptional<T>(_ errorMessage: String) -> Self where Value == Optional<T> {
     .init(error: errorMessage, validation: { value, _ in value != nil })
   }
-  
 
+  static func custom(errorMessage: String, validation: @escaping (Value, State) -> Bool) -> Self where Value: Equatable {
+    .init(error: errorMessage, validation: validation)
+  }
 }

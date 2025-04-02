@@ -21,7 +21,7 @@ public struct ValidationRule<Value, State> {
 public extension Collection {
     /// Triggers the validation of all ``ValidationRule``.
   func validate<Value, State>(_ value: Value, _ state: State) -> String? where Element == ValidationRule<Value, State> {
-        first(where: { $0.validate(value, state) == false })
+        first(where: { !$0.validate(value, state) } )
             .map(\.errorMessage)
     }
 }
