@@ -6,6 +6,8 @@ import Foundation
 public struct FieldValidation<State> {
   // Used by FormValidationReducer
   let binding: PartialKeyPath<State>
+  let errorState: WritableKeyPath<State, String?>
+  let onTheFlyValidation: Bool
   
   private let _validate: (inout State) -> Bool
   
@@ -18,22 +20,31 @@ public struct FieldValidation<State> {
   ///   - rules: The set of ``ValidationRule`` to validate the field
   ///
   private init<FieldType>( binding: PartialKeyPath<State>, field: KeyPath<State, FieldType>,
-                           errorState: WritableKeyPath<State, String?>, rules: [ValidationRule<FieldType, State>] ) {
-    self.binding = binding
-    
+                           errorState: WritableKeyPath<State, String?>, rules: [ValidationRule<FieldType, State>],
+                           onTheFlyValidation: Bool = true ) {
+
+    self.binding            = binding
+    self.errorState         = errorState
+    self.onTheFlyValidation = onTheFlyValidation
+
     self._validate = { state in
       let value = state[keyPath: field]
       let validationError = rules.validate(value, state)
       
-      state[keyPath: errorState] = validationError
+      state[keyPath: errorState] = state[keyPath: errorState] ?? validationError
       
       return validationError == nil
     }
   }
   
   @discardableResult
-  public func validate(state: inout State) -> Bool {
-    _validate(&state)
+  public func validate(state: inout State, onTheFly: Bool = false) -> Bool {
+    let isValid = _validate(&state)
+    if onTheFly && !onTheFlyValidation && !isValid {
+      state[keyPath: errorState] = nil
+    }
+    
+    return isValid
   }
 }
 
@@ -54,8 +65,9 @@ public extension FieldValidation {
   ///   ```
   ///
   init<Value>( field: WritableKeyPath<State, Value>, errorState: WritableKeyPath<State, String?>,
-               rules: [ValidationRule<Value, State>] ) {
-    self.init( binding: field, field: field, errorState: errorState, rules: rules )
+               rules: [ValidationRule<Value, State>], onTheFlyValidation: Bool = true ) {
+    self.init( binding: field, field: field, errorState: errorState, rules: rules,
+               onTheFlyValidation: onTheFlyValidation )
   }
   
   /// Creates a ``FieldValidation`` from a `BindingState` of ``ValidatableField``
@@ -71,8 +83,9 @@ public extension FieldValidation {
   ///   )
   ///   ```
   ///
-  init<Value>( field: WritableKeyPath<State, ValidatableField<Value>>, rules: [ValidationRule<Value, State>] ) {
+  init<Value>( field: WritableKeyPath<State, ValidatableField<Value>>, rules: [ValidationRule<Value, State>],
+               onTheFlyValidation: Bool = false ) {
     self.init( binding: field, field: field.appending(path: \.value),
-               errorState: field.appending(path: \.errorText), rules: rules )
+               errorState: field.appending(path: \.errorText), rules: rules, onTheFlyValidation: onTheFlyValidation )
   }
 }

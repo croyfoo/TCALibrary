@@ -89,27 +89,27 @@ where State == ViewAction.State, ViewAction: BindableAction {
         self.validations           = validations
     }
 
-    public func reduce(into state: inout State, action: Action) -> Effect<Action> {
-        if let viewAction = toViewAction(action),
-            AnyCasePath(submitAction).extract(from: viewAction) != nil {
-            let didSucceed = validateAllFields(state: &state)
-            // On success validation
-            return didSucceed ? .send(onFormValidatedAction) : .none
-        }
-
-        if let validation = getFirstValidation(for: action) {
-            validation.validate(state: &state)
-        }
-
-        return .none
+  public func reduce(into state: inout State, action: Action) -> Effect<Action> {
+    if let viewAction = toViewAction(action),
+       AnyCasePath(submitAction).extract(from: viewAction) != nil {
+      let didSucceed = validateAllFields(state: &state)
+      // On success validation
+      return didSucceed ? .send(onFormValidatedAction) : .none
     }
-
-    private func validateAllFields(state: inout State) -> Bool {
-        // SwiftLint rule suggests tu use "allSatisfy",
-        // but it actually changes the behavior as it will stop at first failing validation
-        // swiftlint:disable:next reduce_boolean
-        validations.reduce(true) { $1.validate(state: &state) && $0 }
+    
+    if let validation = getFirstValidation(for: action) {
+      let didSucceed = validation.validate(state: &state, onTheFly: true)
     }
+    
+    return .none
+  }
+
+  private func validateAllFields(state: inout State) -> Bool {
+    // SwiftLint rule suggests tu use "allSatisfy",
+    // but it actually changes the behavior as it will stop at first failing validation
+    // swiftlint:disable:next reduce_boolean
+    validations.reduce(true) { $1.validate(state: &state) && $0 }
+  }
 
     private func getFirstValidation(for action: Action) -> FieldValidation<State>? {
         let binding = toViewAction(action).flatMap(\.binding)

@@ -7,7 +7,7 @@ public struct ValidatableField<Value> {
 
     /// Creates a ``ValidatableField``
     public init(value: Value, errorText: String? = nil) {
-        self.value = value
+        self.value     = value
         self.errorText = errorText
     }
 }

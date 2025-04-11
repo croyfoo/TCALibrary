@@ -16,6 +16,8 @@ extension View {
           Text(errorMessage)
             .lineLimit(2)
             .foregroundStyle(.red)
+            .font(.subheadline)
+            .italic()
         }
       }
     }
