@@ -1,4 +1,12 @@
 //
+//  USState.swift
+//  TCALibrary
+//
+//  Created by David Croy on 5/27/25.
+//
+
+
+//
 //  StateMenu.swift
 //  Training
 //
@@ -7,7 +15,6 @@
 
 import SwiftUI
 import ComposableArchitecture
-import TCALibrary
 
 // Abridged list of US States for brevity
 enum USState: String, CaseIterable, Identifiable, Sendable {
@@ -17,11 +24,11 @@ enum USState: String, CaseIterable, Identifiable, Sendable {
   var id: String { self.rawValue }
 }
 
-struct StateMenu: View {
+public struct StateMenu: View {
   @Binding var selectedState: USState
   @Binding var errorMessage: String?
   
-  var body: some View {
+  public var body: some View {
     Menu {
       Picker("", selection: $selectedState) {
         ForEach(USState.allCases) { state in
