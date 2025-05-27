@@ -98,7 +98,11 @@ where State == ViewAction.State, ViewAction: BindableAction {
     }
     
     if let validation = getFirstValidation(for: action) {
-      let didSucceed = validation.validate(state: &state, onTheFly: true)
+      if validation.onTheFlyValidation {
+        let didSucceed = validation.validate(state: &state, onTheFly: true)
+      } else {
+        state[keyPath: validation.errorState] = nil
+      }
     }
     
     return .none
@@ -111,11 +115,11 @@ where State == ViewAction.State, ViewAction: BindableAction {
     validations.reduce(true) { $1.validate(state: &state) && $0 }
   }
 
-    private func getFirstValidation(for action: Action) -> FieldValidation<State>? {
-        let binding = toViewAction(action).flatMap(\.binding)
+  private func getFirstValidation(for action: Action) -> FieldValidation<State>? {
+    let binding = toViewAction(action).flatMap(\.binding)
 
-        return validations.first(where: { $0.binding == binding?.keyPath })
-    }
+    return validations.first(where: { $0.binding == binding?.keyPath })
+  }
 }
 
 // MARK: - Initializer with CaseKeyPath argument

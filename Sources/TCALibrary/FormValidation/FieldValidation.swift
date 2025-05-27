@@ -21,14 +21,14 @@ public struct FieldValidation<State> {
   ///
   private init<FieldType>( binding: PartialKeyPath<State>, field: KeyPath<State, FieldType>,
                            errorState: WritableKeyPath<State, String?>, rules: [ValidationRule<FieldType, State>],
-                           onTheFlyValidation: Bool = true ) {
+                           onTheFlyValidation: Bool = false ) {
 
     self.binding            = binding
     self.errorState         = errorState
     self.onTheFlyValidation = onTheFlyValidation
 
     self._validate = { state in
-      let value = state[keyPath: field]
+      let value           = state[keyPath: field]
       let validationError = rules.validate(value, state)
       
       state[keyPath: errorState] = state[keyPath: errorState] ?? validationError
@@ -40,7 +40,7 @@ public struct FieldValidation<State> {
   @discardableResult
   public func validate(state: inout State, onTheFly: Bool = false) -> Bool {
     let isValid = _validate(&state)
-    if onTheFly && !onTheFlyValidation && !isValid {
+    if onTheFly && !onTheFlyValidation { //} && !isValid {
       state[keyPath: errorState] = nil
     }
     
@@ -57,8 +57,8 @@ public extension FieldValidation {
   ///   - rules: The set of ``ValidationRule`` to validate the field
   ///
   ///   ```swift
-  ///   FieldValidate(
-  ///       field: \.$name,
+  ///   FieldValidatation(
+  ///       field: \.name,
   ///       errorState: \.nameError,
   ///       rules: [ValidationRule(...), ValidationRule(...), ...]
   ///   )
@@ -77,14 +77,15 @@ public extension FieldValidation {
   ///   - rules: The set of ``ValidationRule`` to validate the field
   ///ValidatableField
   ///   ```swift
-  ///   FieldValidate(
-  ///       field: \.$name,
+  ///   FieldValidation(
+  ///       field: \.name,
   ///       rules: [ValidationRule(...), ValidationRule(...), ...]
   ///   )
   ///   ```
   ///
   init<Value>( field: WritableKeyPath<State, ValidatableField<Value>>, rules: [ValidationRule<Value, State>],
                onTheFlyValidation: Bool = false ) {
+//    self.init( binding: field, field: field.appending(path: \.value),
     self.init( binding: field, field: field.appending(path: \.value),
                errorState: field.appending(path: \.errorText), rules: rules, onTheFlyValidation: onTheFlyValidation )
   }

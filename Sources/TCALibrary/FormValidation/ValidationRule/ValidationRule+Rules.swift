@@ -27,8 +27,8 @@ public extension ValidationRule {
     .init(error: errorMessage, validation: { compareValue, _ in compareValue == value })
   }
   
-  static func isEqual(to keyPath: KeyPath<State, Value>, errorMessage: String) -> Self where Value: Equatable {
-    .init(error: errorMessage, validation: { value, state in value == state[keyPath: keyPath] })
+  static func isEqual(to keyPath: KeyPath<State, ValidatableField<Value>>, errorMessage: String) -> Self where Value: Equatable {
+    .init( error: errorMessage, validation: { value, state in value == state[keyPath: keyPath].value } )
   }
   
   static func nonOptional<T>(_ errorMessage: String) -> Self where Value == Optional<T> {

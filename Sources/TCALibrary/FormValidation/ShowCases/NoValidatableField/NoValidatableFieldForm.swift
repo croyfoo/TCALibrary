@@ -1,5 +1,6 @@
 import ComposableArchitecture
 import Foundation
+import SwiftUI
 
 @Reducer
 struct NoValidatableFieldForm {
@@ -71,4 +72,8 @@ struct NoValidatableFieldForm {
         }
         .ifLet(\.$alert, action: \.alert)
     }
+}
+
+#Preview {
+  NoValidatableFieldFormView()
 }
