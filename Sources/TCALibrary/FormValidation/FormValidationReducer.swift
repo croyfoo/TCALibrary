@@ -99,7 +99,7 @@ where State == ViewAction.State, ViewAction: BindableAction {
     
     if let validation = getFirstValidation(for: action) {
       if validation.onTheFlyValidation {
-        let didSucceed = validation.validate(state: &state, onTheFly: true)
+        validation.validate(state: &state, onTheFly: true)
       } else {
         state[keyPath: validation.errorState] = nil
       }

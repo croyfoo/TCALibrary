@@ -56,6 +56,20 @@ public extension ValidationRule {
     )
   }
   
+  static func isOneOf<S: Sequence>(_ validValues: S, fieldName: String) -> Self where S.Element == Value, Value: Equatable {
+    .init(
+      error: "\(fieldName.capitalized) must be one of the valid options",
+      validation: { value, _ in validValues.contains(value) }
+    )
+  }
+  
+  static func isOneOf<S: Sequence>(_ validValues: S, errorMessage: String) -> Self where S.Element == Value, Value: Equatable {
+    .init(
+      error: errorMessage,
+      validation: { value, _ in validValues.contains(value) }
+    )
+  }
+  
   static func isValidEmail(fieldName: String) -> Self where Value == String {
     .init(
       error: "\(fieldName.capitalized) must be a valid email address",
