@@ -1,4 +1,5 @@
 import Foundation
+import DDSCommon
 
 public extension ValidationRule {
   static func nonEmpty(fieldName: String) -> Self where Value: Collection {
@@ -10,6 +11,13 @@ public extension ValidationRule {
   
   static func length(min: UInt, error: String) -> Self where Value: Collection {
     .init(error: error, validation: { value, _ in value.count >= min })
+  }
+  
+  static func exactLength(_ length: UInt, fieldName: String) -> Self where Value: Collection {
+    .init(
+      error: "\(fieldName.capitalized) must be exactly \(length) characters",
+      validation: { value, _ in value.count == length }
+    )
   }
   
   static func greaterOrEqual(to value: Value, fieldName: String) -> Self where Value: Comparable {
@@ -37,5 +45,30 @@ public extension ValidationRule {
 
   static func custom(errorMessage: String, validation: @escaping (Value, State) -> Bool) -> Self where Value: Equatable {
     .init(error: errorMessage, validation: validation)
+  }
+  
+  static func matchesRegex(_ pattern: String, errorMessage: String) -> Self where Value == String {
+    .init(
+      error: errorMessage,
+      validation: { value, _ in
+        return NSPredicate(format: "SELF MATCHES %@", pattern).evaluate(with: value)
+      }
+    )
+  }
+  
+  static func isValidEmail(fieldName: String) -> Self where Value == String {
+    .init(
+      error: "\(fieldName.capitalized) must be a valid email address",
+      validation: { value, _ in
+        value.validEmail
+      })
+  }
+  
+  static func isValidPhoneNumber(fieldName: String) -> Self where Value == String {
+    .init(
+      error: "\(fieldName.capitalized) must be a valid phone number",
+      validation: { value, _ in
+        value.validPhoneNumber
+      })
   }
 }

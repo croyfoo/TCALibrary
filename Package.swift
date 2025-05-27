@@ -16,7 +16,8 @@ let package = Package(
       targets: ["TCALibrary"]),
   ],
   dependencies: [
-    .package(url: "https://github.com/pointfreeco/swift-composable-architecture", .upToNextMajor(from: "1.18.0")),
+    .package(url: "https://github.com/pointfreeco/swift-composable-architecture", .upToNextMajor(from: "1.20.0")),
+    .package(url: "https://github.com/croyfoo/DDSCommon", .upToNextMajor(from: "1.0.0")),
 //    .package(url: "https://github.com/pointfreeco/swift-dependencies", .upToNextMajor(from: "1.6.0")),
 //    .package(url: "https://github.com/pointfreeco/swift-gen", from: "0.3.1"),
 //    .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay", from: "0.8.4")
@@ -28,6 +29,7 @@ let package = Package(
       name: "TCALibrary",
       dependencies: [
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+        .product(name: "DDSCommon", package: "DDSCommon"),
         // Add any other product dependencies here
       ]
     ),
