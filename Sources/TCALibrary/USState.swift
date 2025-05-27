@@ -5,7 +5,6 @@
 //  Created by David Croy on 5/27/25.
 //
 
-
 //
 //  StateMenu.swift
 //  Training
@@ -27,6 +26,11 @@ public enum USState: String, CaseIterable, Identifiable, Sendable {
 public struct StateMenu: View {
   @Binding var selectedState: USState
   @Binding var errorMessage: String?
+  
+  public init(selectedState: Binding<USState>, errorMessage: Binding<String?>) {
+    self._selectedState = selectedState
+    self._errorMessage = errorMessage
+  }
   
   public var body: some View {
     Menu {
@@ -61,6 +65,3 @@ public struct StateMenu: View {
   @Previewable @State var errorMessage: String?
   StateMenu(selectedState: $selectedState, errorMessage: $errorMessage)
 }
-
-
-
