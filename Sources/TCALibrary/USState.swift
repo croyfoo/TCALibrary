@@ -17,11 +17,11 @@ import SwiftUI
 import ComposableArchitecture
 
 // Abridged list of US States for brevity
-enum USState: String, CaseIterable, Identifiable, Sendable {
+public enum USState: String, CaseIterable, Identifiable, Sendable {
   case none = "State" // Placeholder
   case AL, AK, AZ, AR, CA, CO, CT, DE, FL, GA, HI, ID, IL, IN, IA, KS, KY, LA, ME, MD, MA, MI, MN, MS, MO, MT, NE, NV, NH, NJ, NM, NY, NC, ND, OH, OK, OR, PA, RI, SC, SD, TN, TX, UT, VT, VA, WA, WV, WI, WY
   
-  var id: String { self.rawValue }
+  public var id: String { self.rawValue }
 }
 
 public struct StateMenu: View {
