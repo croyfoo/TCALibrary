@@ -162,18 +162,24 @@ private actor Recorder {
   
   func requestAuthorization() async -> AVAudioApplication.recordPermission {
     // Get the current permission status
-    let currentPermission = AVAudioApplication.shared.recordPermission
-    // If permission is undetermined, request it
-    if currentPermission == .undetermined {
-      return await withCheckedContinuation { continuation in
-        AVAudioApplication.requestRecordPermission { granted in
-          continuation.resume(returning: (granted ? .granted : .denied)) //.granted)
-        }
+    // CHANGE: Use AVAudioSession instead of AVAudioApplication for more reliable permission handling
+    return await withCheckedContinuation { continuation in
+      AVAudioSession.sharedInstance().requestRecordPermission { granted in
+        continuation.resume(returning: granted ? .granted : .denied)
       }
     }
+//    let currentPermission = AVAudioApplication.shared.recordPermission
+//    // If permission is undetermined, request it
+//    if currentPermission == .undetermined {
+//      return await withCheckedContinuation { continuation in
+//        AVAudioApplication.requestRecordPermission { granted in
+//          continuation.resume(returning: (granted ? .granted : .denied)) //.granted)
+//        }
+//      }
+//  }
     
     // Otherwise return the current permission status
-    return currentPermission
+//    return currentPermission
   }
   
   func pause() {
