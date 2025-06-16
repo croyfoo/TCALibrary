@@ -26,7 +26,9 @@ extension SpeechRecognizerBeta: DependencyKey {
 private actor Speech {
   var audioFilePath: URL?
   //  var audioFilePath: URL?                       = nil
+#if os(iOS)
   var audioSession: AVAudioSession = .sharedInstance()
+#endif
   var audioEngine: AVAudioEngine?               = nil
   var recognitionTask: SFSpeechRecognitionTask? = nil
   var recognitionContinuation: AsyncThrowingStream<SpeechRecognitionResultFoo, any Error>.Continuation?
@@ -70,6 +72,7 @@ private actor Speech {
   
   private func handleContinuationSetup(_ continuation: AsyncThrowingStream<SpeechRecognitionResultFoo, any Error>.Continuation) {
     self.recognitionContinuation = continuation
+#if os(iOS)
     let audioSession = AVAudioSession.sharedInstance()
     do {
       try audioSession.setCategory(.record, mode: .measurement, options: .duckOthers)
@@ -78,6 +81,7 @@ private actor Speech {
       continuation.finish(throwing: SpeechRecognizerBeta.Failure.couldntConfigureAudioSession)
       return
     }
+#endif
     
     self.audioEngine     = AVAudioEngine()
     let speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))!

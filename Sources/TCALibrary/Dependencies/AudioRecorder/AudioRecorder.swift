@@ -1,6 +1,7 @@
 import ComposableArchitecture
 import Speech
-import AVFAudio
+import AVFoundation
+//import AVFAudio
 
 @DependencyClient
 public struct AudioRecorder: Sendable {
@@ -18,23 +19,33 @@ public struct AudioRecorder: Sendable {
   
   public struct Configuration: Equatable, Sendable {
     public var audioSettings: [String: any Sendable]
-    public var category: AVAudioSession.Category
-    public var mode: AVAudioSession.Mode
-    public var options: AVAudioSession.CategoryOptions
+//    public var category: AVAudioSession.Category
+//    public var mode: AVAudioSession.Mode
+//    public var options: AVAudioSession.CategoryOptions
     public var monitorMeters: Bool
     public var audioFilePath: URL
     
-    public init(audioSettings: [String : any Sendable]? = nil, category: AVAudioSession.Category? = nil,
-                mode: AVAudioSession.Mode? = nil, options: AVAudioSession.CategoryOptions? = nil,
+//    public init(audioSettings: [String : any Sendable]? = nil, category: AVAudioSession.Category? = nil,
+    public init(audioSettings: [String : any Sendable]? = nil, //mode: AVAudioSession.Mode? = nil,
+//                options: AVAudioSession.CategoryOptions? = nil,
                 monitorMeters: Bool? = nil, audioFilePath: URL? = nil) {
       self.audioSettings = audioSettings ?? Self.defaultConfig.audioSettings
-      self.category      = category ?? Self.defaultConfig.category
-      self.mode          = mode ?? Self.defaultConfig.mode
-      self.options       = options ?? Self.defaultConfig.options
+//      self.category      = category ?? Self.defaultConfig.category
+//      self.mode          = mode ?? Self.defaultConfig.mode
+//      self.options       = options ?? Self.defaultConfig.options
       self.monitorMeters = monitorMeters ?? Self.defaultConfig.monitorMeters
       self.audioFilePath = audioFilePath ?? Self.defaultConfig.audioFilePath
     }
     
+    public static let recordingSettings: [String: any Sendable] = [
+      AVFormatIDKey: kAudioFormatLinearPCM,
+      AVSampleRateKey: 16000.0,
+      AVNumberOfChannelsKey: 1,
+      AVLinearPCMBitDepthKey: 16,
+      AVLinearPCMIsBigEndianKey: false,
+      AVLinearPCMIsFloatKey: false
+    ]
+
     public static let defaultConfig = Configuration(
       audioSettings: [
         AVFormatIDKey: kAudioFormatMPEG4AAC,
@@ -42,17 +53,16 @@ public struct AudioRecorder: Sendable {
         AVNumberOfChannelsKey: 1
         //        AVNumberOfChannelsKey: 1 as NSNumber
       ],
-      category: .record,
-      mode: .measurement,
-      options: .duckOthers,
+//      category: .record,
+//      mode: .measurement,
+//      options: .duckOthers,
       monitorMeters: true,
       audioFilePath: URL.documentsDirectory
     )
     
     public static func == (lhs: Configuration, rhs: Configuration) -> Bool {
-      lhs.category      == rhs.category &&
-      lhs.mode          == rhs.mode &&
-      lhs.options       == rhs.options &&
+//      lhs.mode          == rhs.mode &&
+//      lhs.options       == rhs.options &&
       lhs.monitorMeters == rhs.monitorMeters &&
       NSDictionary(dictionary: lhs.audioSettings).isEqual(to: rhs.audioSettings)
     }

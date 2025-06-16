@@ -95,14 +95,22 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     let status = manager.authorizationStatus
     
     switch status {
-    case .authorizedAlways, .authorizedWhenInUse:
+    case .authorizedAlways:
       return true
+#if os(iOS)
+    case .authorizedWhenInUse:
+      return true
+#endif
     case .denied, .restricted:
       return false
     case .notDetermined:
       return await withCheckedContinuation { continuation in
         self.permissionContinuation = continuation
+#if os(iOS)
         manager.requestWhenInUseAuthorization()
+#else
+        manager.requestAlwaysAuthorization()
+#endif
       }
     @unknown default:
       return false
@@ -111,9 +119,15 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
   
   func getCurrentLocation() async throws -> CLLocation {
     let status = manager.authorizationStatus
+#if os(iOS)
     guard status == .authorizedAlways || status == .authorizedWhenInUse else {
       throw LocationError.notAuthorized
     }
+#else
+    guard status == .authorizedAlways else {
+      throw LocationError.notAuthorized
+    }
+#endif
     
     return try await withCheckedThrowingContinuation { continuation in
       self.locationContinuation = continuation
@@ -168,7 +182,11 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
   nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
     let status = manager.authorizationStatus
     Task { @MainActor in
+#if os(iOS)
       let granted = status == .authorizedAlways || status == .authorizedWhenInUse
+#else
+      let granted = status == .authorizedAlways
+#endif
       permissionContinuation?.resume(returning: granted)
       permissionContinuation = nil
     }

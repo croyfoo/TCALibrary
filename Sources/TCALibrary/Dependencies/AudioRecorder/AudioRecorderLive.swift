@@ -32,7 +32,6 @@ extension AudioRecorder: DependencyKey {
 private actor Recorder {
   private(set) var validAudio = false
   
-  var audioSession: AVAudioSession = .sharedInstance()
   var audioRecorder: AVAudioRecorder?
   var recorderContinuation: AsyncThrowingStream<AudioRecorder.Action, Error>.Continuation?
   var configuration: AudioRecorder.Configuration
@@ -127,13 +126,16 @@ private actor Recorder {
   }
   
   private func configureAudioSession() throws {
+#if os(iOS)
+    var audioSession: AVAudioSession = .sharedInstance()
     do {
-      try audioSession.setCategory( configuration.category, mode: configuration.mode,
-                                    options: configuration.options )
+      try audioSession.setCategory(.record, mode: .default) //, configuration.mode,
+//                                    options: configuration.options )
       try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
     } catch {
       throw AudioRecorder.RecorderError.invalidAudioSession
     }
+#endif
   }
   
   private func setupAudioRecorder(_ continuation: AsyncThrowingStream<AudioRecorder.Action, Error>.Continuation) throws {
@@ -163,10 +165,11 @@ private actor Recorder {
   func requestAuthorization() async -> AVAudioApplication.recordPermission {
     // Get the current permission status
     // CHANGE: Use AVAudioSession instead of AVAudioApplication for more reliable permission handling
-    return await withCheckedContinuation { continuation in
-      AVAudioSession.sharedInstance().requestRecordPermission { granted in
-        continuation.resume(returning: granted ? .granted : .denied)
-      }
+    let granted = await AVAudioApplication.requestRecordPermission()
+    return await withCheckedContinuation { [granted] continuation in
+//      AVAudioSession.sharedInstance().requestRecordPermission { granted in
+      continuation.resume(returning: granted ? .granted : .denied)
+//      }
     }
 //    let currentPermission = AVAudioApplication.shared.recordPermission
 //    // If permission is undetermined, request it
