@@ -65,7 +65,7 @@ public extension FieldValidation {
   ///   ```
   ///
   init<Value>( field: WritableKeyPath<State, Value>, errorState: WritableKeyPath<State, String?>,
-               rules: [ValidationRule<Value, State>], onTheFlyValidation: Bool = true ) {
+               rules: [ValidationRule<Value, State>], onTheFlyValidation: Bool = false ) {
     self.init( binding: field, field: field, errorState: errorState, rules: rules,
                onTheFlyValidation: onTheFlyValidation )
   }
