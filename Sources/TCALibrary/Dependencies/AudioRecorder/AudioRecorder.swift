@@ -39,9 +39,20 @@ public struct AudioRecorder: Sendable {
     
     public static let recordingSettings: [String: any Sendable] = [
       AVFormatIDKey: kAudioFormatLinearPCM,
-      AVSampleRateKey: 16000.0,
+      AVSampleRateKey: 44100,
       AVNumberOfChannelsKey: 1,
       AVLinearPCMBitDepthKey: 16,
+      AVLinearPCMIsBigEndianKey: false,
+      AVLinearPCMIsFloatKey: false
+    ]
+
+    static let audioSettingsHigh: [String: any Sendable] = [
+      AVFormatIDKey: Int(kAudioFormatMPEG4AAC),  // AAC format (closest to MP3 quality)
+      AVSampleRateKey: 44100.0,                  // 44.1kHz sample rate
+      AVNumberOfChannelsKey: 1,                  // Mono (stereo would double the bitrate)
+      AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue,
+      AVEncoderBitRateKey: 64000,               // 64kbps bitrate
+      AVLinearPCMBitDepthKey: 16,               // 16-bit depth
       AVLinearPCMIsBigEndianKey: false,
       AVLinearPCMIsFloatKey: false
     ]
