@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
   name: "TCALibrary",
   platforms: [
-    .iOS(.v17),
+    .iOS(.v18),
     .macOS(.v15)
   ],
   products: [
@@ -16,7 +16,7 @@ let package = Package(
       targets: ["TCALibrary"]),
   ],
   dependencies: [
-    .package(url: "https://github.com/pointfreeco/swift-composable-architecture", .upToNextMajor(from: "1.20.0")),
+    .package(url: "https://github.com/pointfreeco/swift-composable-architecture", .upToNextMajor(from: "1.23.0")),
     .package(url: "https://github.com/croyfoo/DDSCommon", .upToNextMajor(from: "1.0.0")),
 //    .package(url: "https://github.com/pointfreeco/swift-dependencies", .upToNextMajor(from: "1.6.0")),
 //    .package(url: "https://github.com/pointfreeco/swift-gen", from: "0.3.1"),
