@@ -1,5 +1,5 @@
 {
-  "originHash" : "e3b30a8f8a902c20da70d170eb53831b47b12f3fa71af939abefb70baf0d56ab",
+  "originHash" : "532b0d6b2d3292735f50c563512741a5e11e345f116142b17b6584dd743c0484",
   "pins" : [
     {
       "identity" : "combine-schedulers",
@@ -11,12 +11,12 @@
       }
     },
     {
-      "identity" : "ddscommon",
+      "identity" : "commonlib",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/croyfoo/DDSCommon",
+      "location" : "https://github.com/DoubleDogSoftware/CommonLib",
       "state" : {
-        "revision" : "ea123717161635ddf0e432f1d56f28ba138ebe2a",
-        "version" : "1.1.14"
+        "revision" : "1e8398298d4c2b8f14795e671a75f47aab8d96df",
+        "version" : "1.1.15"
       }
     },
     {
