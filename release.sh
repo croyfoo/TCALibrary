@@ -137,6 +137,10 @@ echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  Step 1/5: Building XCFramework"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# Ensure we build from source, not from a stale binary target
+sed -i '' 's/^let useBinaryTarget = true/let useBinaryTarget = false/' "${PACKAGE_SWIFT}"
+
 cd "${SCRIPT_DIR}"
 ./build-xcframework.sh
 
