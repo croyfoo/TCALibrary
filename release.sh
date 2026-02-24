@@ -19,9 +19,12 @@ set -euo pipefail
 #   ./release.sh
 # ──────────────────────────────────────────────
 
-REPO="croyfoo/TCALibrary"
 FRAMEWORK_NAME="TCALibrary"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Derive owner/repo from the first git remote URL
+REPO=$(git -C "${SCRIPT_DIR}" remote get-url "$(git -C "${SCRIPT_DIR}" remote | head -1)" \
+  | sed -E 's#(.*github\.com[:/])##; s#\.git$##')
 PACKAGE_SWIFT="${SCRIPT_DIR}/Package.swift"
 BUILD_DIR="${SCRIPT_DIR}/build"
 ZIP_PATH="${BUILD_DIR}/${FRAMEWORK_NAME}.xcframework.zip"
