@@ -24,6 +24,47 @@ ARCHIVE_DIR="${BUILD_DIR}/archives"
 XCFRAMEWORK_DIR="${BUILD_DIR}/${FRAMEWORK_NAME}.xcframework"
 ZIP_PATH="${BUILD_DIR}/${FRAMEWORK_NAME}.xcframework.zip"
 
+# ── Helper: copy .swiftmodule into framework bundle ──
+# xcodebuild archive places .swiftmodule directories in DerivedData
+# rather than inside the .framework bundle. We copy them into
+# <framework>/Modules so that xcodebuild -create-xcframework
+# picks them up and consumers get the Swift module interfaces.
+# Must be called immediately after each archive build before the
+# next build overwrites the intermediates.
+copy_swiftmodule() {
+  local ARCHIVE_NAME="$1"   # e.g. ios-device
+  local BUILD_CONFIG="$2"   # e.g. Release-iphoneos
+  local ARCH_TRIPLE="$3"    # e.g. arm64-apple-ios
+
+  local FRAMEWORK_DIR="${ARCHIVE_DIR}/${ARCHIVE_NAME}.xcarchive/Products/Library/Frameworks/${FRAMEWORK_NAME}.framework"
+  local SWIFTMODULE_SRC="${BUILD_DIR}/DerivedData/Build/Intermediates.noindex/ArchiveIntermediates/${SCHEME}/BuildProductsPath/${BUILD_CONFIG}/${FRAMEWORK_NAME}.swiftmodule"
+  local INTERMEDIATES_DIR="${BUILD_DIR}/DerivedData/Build/Intermediates.noindex/ArchiveIntermediates/${SCHEME}/IntermediateBuildFilesPath/${FRAMEWORK_NAME}.build/${BUILD_CONFIG}/${FRAMEWORK_NAME}.build/Objects-normal/arm64"
+
+  if [ ! -d "${FRAMEWORK_DIR}" ]; then
+    echo "  ⚠️  ${ARCHIVE_NAME}: framework not found, skipping"
+    return
+  fi
+
+  local DEST="${FRAMEWORK_DIR}/Modules/${FRAMEWORK_NAME}.swiftmodule"
+  mkdir -p "${DEST}"
+
+  # Copy .swiftmodule, .swiftdoc, .abi.json from BuildProductsPath (already arch-prefixed)
+  if [ -d "${SWIFTMODULE_SRC}" ]; then
+    cp -a "${SWIFTMODULE_SRC}/"* "${DEST}/"
+  fi
+
+  # Copy .swiftinterface files from IntermediateBuildFilesPath (need arch prefix)
+  for EXT in swiftinterface private.swiftinterface package.swiftinterface; do
+    local SRC_FILE="${INTERMEDIATES_DIR}/${FRAMEWORK_NAME}.${EXT}"
+    if [ -f "${SRC_FILE}" ]; then
+      cp "${SRC_FILE}" "${DEST}/${ARCH_TRIPLE}.${EXT}"
+    fi
+  done
+
+  echo "  ✅ ${ARCHIVE_NAME}: copied .swiftmodule + .swiftinterface"
+  ls "${DEST}/" | sed 's/^/     /'
+}
+
 # Clean previous build artifacts
 echo "🧹 Cleaning previous builds..."
 rm -rf "${BUILD_DIR}"
@@ -37,13 +78,13 @@ xcodebuild archive \
   -destination "generic/platform=iOS" \
   -archivePath "${ARCHIVE_DIR}/ios-device" \
   -derivedDataPath "${BUILD_DIR}/DerivedData" \
-  BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
   SKIP_INSTALL=NO \
   SWIFT_SERIALIZE_DEBUGGING_OPTIONS=NO \
   CODE_SIGNING_REQUIRED=NO \
   CODE_SIGNING_ALLOWED=NO \
   INSTALL_PATH=/Library/Frameworks \
   2>&1 | tail -5
+copy_swiftmodule "ios-device" "Release-iphoneos" "arm64-apple-ios"
 
 # ── iOS Simulator ──
 echo "📱 Building for iOS Simulator (arm64 + x86_64)..."
@@ -53,41 +94,13 @@ xcodebuild archive \
   -destination "generic/platform=iOS Simulator" \
   -archivePath "${ARCHIVE_DIR}/ios-simulator" \
   -derivedDataPath "${BUILD_DIR}/DerivedData" \
-  BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
   SKIP_INSTALL=NO \
   SWIFT_SERIALIZE_DEBUGGING_OPTIONS=NO \
   CODE_SIGNING_REQUIRED=NO \
   CODE_SIGNING_ALLOWED=NO \
   INSTALL_PATH=/Library/Frameworks \
   2>&1 | tail -5
-
-# ── Copy .swiftmodule into framework bundles ──
-# xcodebuild archive places .swiftmodule directories in DerivedData
-# rather than inside the .framework bundle. We copy them into
-# <framework>/Modules so that xcodebuild -create-xcframework
-# picks them up and consumers get the Swift module interfaces.
-echo "📋 Copying .swiftmodule files into framework bundles..."
-
-copy_swiftmodule() {
-  local ARCHIVE_NAME="$1"   # e.g. ios-device
-  local BUILD_CONFIG="$2"   # e.g. Release-iphoneos
-
-  local FRAMEWORK_DIR="${ARCHIVE_DIR}/${ARCHIVE_NAME}.xcarchive/Products/Library/Frameworks/${FRAMEWORK_NAME}.framework"
-  local SWIFTMODULE_SRC="${BUILD_DIR}/DerivedData/Build/Intermediates.noindex/ArchiveIntermediates/${SCHEME}/BuildProductsPath/${BUILD_CONFIG}/${FRAMEWORK_NAME}.swiftmodule"
-
-  if [ -d "${FRAMEWORK_DIR}" ] && [ -d "${SWIFTMODULE_SRC}" ]; then
-    mkdir -p "${FRAMEWORK_DIR}/Modules/${FRAMEWORK_NAME}.swiftmodule"
-    cp -a "${SWIFTMODULE_SRC}/"* "${FRAMEWORK_DIR}/Modules/${FRAMEWORK_NAME}.swiftmodule/"
-    echo "  ✅ ${ARCHIVE_NAME}: copied .swiftmodule"
-  elif [ ! -d "${FRAMEWORK_DIR}" ]; then
-    echo "  ⚠️  ${ARCHIVE_NAME}: framework not found, skipping"
-  elif [ ! -d "${SWIFTMODULE_SRC}" ]; then
-    echo "  ⚠️  ${ARCHIVE_NAME}: .swiftmodule not found at ${SWIFTMODULE_SRC}, skipping"
-  fi
-}
-
-copy_swiftmodule "ios-device"    "Release-iphoneos"
-copy_swiftmodule "ios-simulator" "Release-iphonesimulator"
+copy_swiftmodule "ios-simulator" "Release-iphonesimulator" "arm64-apple-ios-simulator"
 
 # ── Create XCFramework ──
 echo "📦 Creating XCFramework..."
