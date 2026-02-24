@@ -126,7 +126,8 @@ echo "  Release:  ${RELEASE_REPO}"
 echo "  URL:      ${RELEASE_URL}"
 echo "════════════════════════════════════════════════"
 echo ""
-read -rp "Proceed with this release? (y/N): " CONFIRM
+read -rp "Proceed with this release? [Y/n]: " CONFIRM
+CONFIRM="${CONFIRM:-Y}"
 if [[ "${CONFIRM}" != "y" && "${CONFIRM}" != "Y" ]]; then
   echo "Aborted."
   exit 1

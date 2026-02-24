@@ -13,7 +13,7 @@ import PackageDescription
 //     Set useBinaryTarget = true and update the url + checksum
 //     after running ./build-xcframework.sh
 // ──────────────────────────────────────────────────────────────
-let useBinaryTarget = true
+let useBinaryTarget = false
 
 // Update these after running ./build-xcframework.sh
 let binaryURL = "https://github.com/croyfoo/TCALibrary/releases/download/1.0.1/TCALibrary.xcframework.zip"
