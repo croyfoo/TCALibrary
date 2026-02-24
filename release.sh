@@ -253,7 +253,11 @@ else
 fi
 
 git add "${PACKAGE_SWIFT}"
-git commit -m "${COMMIT_MSG}"
+if git diff --cached --quiet; then
+  echo "  (no changes to commit — Package.swift already up to date)"
+else
+  git commit -m "${COMMIT_MSG}"
+fi
 git tag "${VERSION}"
 
 # Push to the source remote (DoubleDogSoftware/TCALibrary)
