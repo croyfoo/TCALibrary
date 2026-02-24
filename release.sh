@@ -164,12 +164,21 @@ git add "${PACKAGE_SWIFT}"
 git commit -m "Release ${VERSION} — binary XCFramework distribution"
 git tag "${VERSION}"
 
-# Detect the remote name (github, origin, etc.)
-REMOTE=$(git remote | head -1)
-echo "  Pushing to remote '${REMOTE}'..."
-git push "${REMOTE}" main --tags
+# Push to the source remote (DoubleDogSoftware/TCALibrary)
+SOURCE_REMOTE=$(git remote | head -1)
+echo "  Pushing to source remote '${SOURCE_REMOTE}'..."
+git push "${SOURCE_REMOTE}" main --tags
 
-echo "  ✅ Pushed commit and tag ${VERSION}"
+# Ensure the release remote exists and push the tag + commit there too
+RELEASE_REMOTE_URL="https://github.com/${RELEASE_REPO}.git"
+if ! git remote get-url release &> /dev/null; then
+  echo "  Adding 'release' remote → ${RELEASE_REMOTE_URL}"
+  git remote add release "${RELEASE_REMOTE_URL}"
+fi
+echo "  Pushing to release remote '${RELEASE_REPO}'..."
+git push release main --tags --force
+
+echo "  ✅ Pushed commit and tag ${VERSION} to both remotes"
 
 # ── Step 5: Create GitHub Release ──
 echo ""
