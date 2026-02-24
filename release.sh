@@ -84,13 +84,14 @@ fi
 # ── Prompt for release type ──
 echo ""
 echo "What type of release would you like to create?"
-echo "  1) Binary  — build XCFramework and attach artifact"
-echo "  2) Source  — tag and release from source only"
+echo "  1) Source  — tag and release from source only (default)"
+echo "  2) Binary  — build XCFramework and attach artifact"
 echo ""
 read -rp "Choose [1/2]: " RELEASE_TYPE_CHOICE
+RELEASE_TYPE_CHOICE="${RELEASE_TYPE_CHOICE:-1}"
 case "${RELEASE_TYPE_CHOICE}" in
-  1) RELEASE_TYPE="binary" ;;
-  2) RELEASE_TYPE="source" ;;
+  1) RELEASE_TYPE="source" ;;
+  2) RELEASE_TYPE="binary" ;;
   *)
     echo "❌ Invalid choice."
     exit 1
