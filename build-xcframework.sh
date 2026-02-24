@@ -23,6 +23,8 @@ BUILD_DIR="$(pwd)/build"
 ARCHIVE_DIR="${BUILD_DIR}/archives"
 XCFRAMEWORK_DIR="${BUILD_DIR}/${FRAMEWORK_NAME}.xcframework"
 ZIP_PATH="${BUILD_DIR}/${FRAMEWORK_NAME}.xcframework.zip"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PACKAGE_SWIFT="${SCRIPT_DIR}/Package.swift"
 
 # ── Helper: copy .swiftmodule into framework bundle ──
 # xcodebuild archive places .swiftmodule directories in DerivedData
@@ -64,6 +66,28 @@ copy_swiftmodule() {
   echo "  ✅ ${ARCHIVE_NAME}: copied .swiftmodule + .swiftinterface"
   ls "${DEST}/" | sed 's/^/     /'
 }
+
+# ── Inject library-evolution flags into TCALibrary target only ──
+# BUILD_LIBRARY_FOR_DISTRIBUTION=YES can't be passed globally because
+# ComposableArchitecture doesn't compile with library evolution.
+# Instead we temporarily add swiftSettings to the TCALibrary target
+# in Package.swift so only our code gets the flags.
+echo "🔧 Injecting library-evolution swiftSettings into Package.swift..."
+cp "${PACKAGE_SWIFT}" "${PACKAGE_SWIFT}.bak"
+restore_package_swift() {
+  if [ -f "${PACKAGE_SWIFT}.bak" ]; then
+    mv "${PACKAGE_SWIFT}.bak" "${PACKAGE_SWIFT}"
+  fi
+}
+trap restore_package_swift EXIT
+
+sed -i '' '/"DDSCommon"/{
+n
+s|        \]|        ],\
+        swiftSettings: [\
+          .unsafeFlags(["-enable-library-evolution", "-emit-module-interface"]),\
+        ]|
+}' "${PACKAGE_SWIFT}"
 
 # Clean previous build artifacts
 echo "🧹 Cleaning previous builds..."
