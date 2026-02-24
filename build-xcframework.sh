@@ -37,6 +37,7 @@ xcodebuild archive \
   -destination "generic/platform=iOS" \
   -archivePath "${ARCHIVE_DIR}/ios-device" \
   -derivedDataPath "${BUILD_DIR}/DerivedData" \
+  BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
   SKIP_INSTALL=NO \
   SWIFT_SERIALIZE_DEBUGGING_OPTIONS=NO \
   CODE_SIGNING_REQUIRED=NO \
@@ -52,12 +53,41 @@ xcodebuild archive \
   -destination "generic/platform=iOS Simulator" \
   -archivePath "${ARCHIVE_DIR}/ios-simulator" \
   -derivedDataPath "${BUILD_DIR}/DerivedData" \
+  BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
   SKIP_INSTALL=NO \
   SWIFT_SERIALIZE_DEBUGGING_OPTIONS=NO \
   CODE_SIGNING_REQUIRED=NO \
   CODE_SIGNING_ALLOWED=NO \
   INSTALL_PATH=/Library/Frameworks \
   2>&1 | tail -5
+
+# ── Copy .swiftmodule into framework bundles ──
+# xcodebuild archive places .swiftmodule directories in DerivedData
+# rather than inside the .framework bundle. We copy them into
+# <framework>/Modules so that xcodebuild -create-xcframework
+# picks them up and consumers get the Swift module interfaces.
+echo "📋 Copying .swiftmodule files into framework bundles..."
+
+copy_swiftmodule() {
+  local ARCHIVE_NAME="$1"   # e.g. ios-device
+  local BUILD_CONFIG="$2"   # e.g. Release-iphoneos
+
+  local FRAMEWORK_DIR="${ARCHIVE_DIR}/${ARCHIVE_NAME}.xcarchive/Products/Library/Frameworks/${FRAMEWORK_NAME}.framework"
+  local SWIFTMODULE_SRC="${BUILD_DIR}/DerivedData/Build/Intermediates.noindex/ArchiveIntermediates/${SCHEME}/BuildProductsPath/${BUILD_CONFIG}/${FRAMEWORK_NAME}.swiftmodule"
+
+  if [ -d "${FRAMEWORK_DIR}" ] && [ -d "${SWIFTMODULE_SRC}" ]; then
+    mkdir -p "${FRAMEWORK_DIR}/Modules/${FRAMEWORK_NAME}.swiftmodule"
+    cp -a "${SWIFTMODULE_SRC}/"* "${FRAMEWORK_DIR}/Modules/${FRAMEWORK_NAME}.swiftmodule/"
+    echo "  ✅ ${ARCHIVE_NAME}: copied .swiftmodule"
+  elif [ ! -d "${FRAMEWORK_DIR}" ]; then
+    echo "  ⚠️  ${ARCHIVE_NAME}: framework not found, skipping"
+  elif [ ! -d "${SWIFTMODULE_SRC}" ]; then
+    echo "  ⚠️  ${ARCHIVE_NAME}: .swiftmodule not found at ${SWIFTMODULE_SRC}, skipping"
+  fi
+}
+
+copy_swiftmodule "ios-device"    "Release-iphoneos"
+copy_swiftmodule "ios-simulator" "Release-iphonesimulator"
 
 # ── Create XCFramework ──
 echo "📦 Creating XCFramework..."
