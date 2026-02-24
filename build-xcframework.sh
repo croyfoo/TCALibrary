@@ -171,12 +171,58 @@ echo ""
 echo "  XCFramework: ${XCFRAMEWORK_DIR}"
 echo "  Zip:         ${ZIP_PATH}"
 echo "  Checksum:    ${CHECKSUM}"
+echo "════════════════════════════════════════════════"
+
+# ── Prompt: update Package.swift for binary distribution ──
 echo ""
-echo "Update your Package.swift binaryTarget with:"
-echo ""
-echo "  .binaryTarget("
-echo "    name: \"${FRAMEWORK_NAME}\","
-echo "    url: \"https://github.com/croyfoo/TCALibrary/releases/download/<VERSION>/${FRAMEWORK_NAME}.xcframework.zip\","
-echo "    checksum: \"${CHECKSUM}\""
-echo "  )"
+read -rp "Would you like to update Package.swift for binary distribution? [Y/n]: " UPDATE_PKG
+UPDATE_PKG="${UPDATE_PKG:-Y}"
+if [[ "${UPDATE_PKG}" == "y" || "${UPDATE_PKG}" == "Y" ]]; then
+  RELEASE_REPO="croyfoo/TCALibrary"
+  CURRENT_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "none")
+
+  SUGGESTED_VERSION=""
+  if [[ "${CURRENT_TAG}" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+    MAJOR="${BASH_REMATCH[1]}"
+    MINOR="${BASH_REMATCH[2]}"
+    PATCH="${BASH_REMATCH[3]}"
+    SUGGESTED_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
+  fi
+
+  echo ""
+  echo "  Current latest tag: ${CURRENT_TAG}"
+  if [[ -n "${SUGGESTED_VERSION}" ]]; then
+    echo "  Suggested next:     ${SUGGESTED_VERSION}"
+    read -rp "  Enter the version number [${SUGGESTED_VERSION}]: " VERSION
+    VERSION="${VERSION:-${SUGGESTED_VERSION}}"
+  else
+    read -rp "  Enter the version number (e.g. 1.0.0): " VERSION
+  fi
+
+  if [[ -z "${VERSION}" ]]; then
+    echo "❌ Version cannot be empty."
+    exit 1
+  fi
+
+  RELEASE_URL="https://github.com/${RELEASE_REPO}/releases/download/${VERSION}/${FRAMEWORK_NAME}.xcframework.zip"
+
+  sed -i '' 's/^let useBinaryTarget = false/let useBinaryTarget = true/' "${PACKAGE_SWIFT}"
+  sed -i '' "s|^let binaryURL = .*|let binaryURL = \"${RELEASE_URL}\"|" "${PACKAGE_SWIFT}"
+  sed -i '' "s|^let binaryChecksum = .*|let binaryChecksum = \"${CHECKSUM}\"|" "${PACKAGE_SWIFT}"
+
+  echo ""
+  echo "  ✅ Package.swift updated"
+  echo "    useBinaryTarget = true"
+  echo "    binaryURL       = ${RELEASE_URL}"
+  echo "    binaryChecksum  = ${CHECKSUM}"
+else
+  echo ""
+  echo "Update your Package.swift binaryTarget with:"
+  echo ""
+  echo "  .binaryTarget("
+  echo "    name: \"${FRAMEWORK_NAME}\","
+  echo "    url: \"https://github.com/croyfoo/TCALibrary/releases/download/<VERSION>/${FRAMEWORK_NAME}.xcframework.zip\","
+  echo "    checksum: \"${CHECKSUM}\""
+  echo "  )"
+fi
 echo "════════════════════════════════════════════════"

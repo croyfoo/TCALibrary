@@ -1,5 +1,5 @@
 {
-  "originHash" : "0dab55aa57283af4f4f3e01bed6dbab8108ee2e77b5578e848a6d0b7f30d634a",
+  "originHash" : "a35448f8ddcabd990336704d8233fd01b6d438b1bf0a6cbdf28a5d0b4e77a649",
   "pins" : [
     {
       "identity" : "combine-schedulers",
@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/croyfoo/DDSCommon",
       "state" : {
-        "revision" : "ea123717161635ddf0e432f1d56f28ba138ebe2a",
-        "version" : "1.1.14"
+        "revision" : "4fa12aa616142d7d1c033cfeafeb6547de245a77",
+        "version" : "1.1.18"
       }
     },
     {

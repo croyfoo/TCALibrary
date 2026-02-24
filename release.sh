@@ -2,14 +2,21 @@
 set -euo pipefail
 
 # ──────────────────────────────────────────────
-# Release TCALibrary as a binary XCFramework
+# Release TCALibrary
 # ──────────────────────────────────────────────
-# This script:
-#   1. Prompts for a version number
-#   2. Builds the XCFramework (calls build-xcframework.sh)
-#   3. Updates Package.swift with the URL and checksum
-#   4. Commits, tags, and pushes
-#   5. Creates a GitHub Release with the artifact
+# This script supports two release modes:
+#
+#   Binary (XCFramework):
+#     1. Builds the XCFramework (calls build-xcframework.sh)
+#     2. Computes checksum
+#     3. Updates Package.swift for binary distribution
+#     4. Commits, tags, and pushes
+#     5. Creates a GitHub Release with the artifact
+#
+#   Source:
+#     1. Updates Package.swift for source distribution
+#     2. Commits, tags, and pushes
+#     3. Creates a GitHub Release (no artifact)
 #
 # Prerequisites:
 #   - GitHub CLI (gh) installed and authenticated
@@ -74,6 +81,22 @@ if ! git diff --quiet || ! git diff --cached --quiet; then
   esac
 fi
 
+# ── Prompt for release type ──
+echo ""
+echo "What type of release would you like to create?"
+echo "  1) Binary  — build XCFramework and attach artifact"
+echo "  2) Source  — tag and release from source only"
+echo ""
+read -rp "Choose [1/2]: " RELEASE_TYPE_CHOICE
+case "${RELEASE_TYPE_CHOICE}" in
+  1) RELEASE_TYPE="binary" ;;
+  2) RELEASE_TYPE="source" ;;
+  *)
+    echo "❌ Invalid choice."
+    exit 1
+    ;;
+esac
+
 # ── Prompt for version ──
 CURRENT_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "none")
 
@@ -121,9 +144,12 @@ RELEASE_URL="https://github.com/${RELEASE_REPO}/releases/download/${VERSION}/${F
 
 echo ""
 echo "════════════════════════════════════════════════"
+echo "  Type:     ${RELEASE_TYPE}"
 echo "  Version:  ${VERSION}"
 echo "  Release:  ${RELEASE_REPO}"
-echo "  URL:      ${RELEASE_URL}"
+if [[ "${RELEASE_TYPE}" == "binary" ]]; then
+  echo "  URL:      ${RELEASE_URL}"
+fi
 echo "════════════════════════════════════════════════"
 echo ""
 read -rp "Proceed with this release? [Y/n]: " CONFIRM
@@ -133,59 +159,101 @@ if [[ "${CONFIRM}" != "y" && "${CONFIRM}" != "Y" ]]; then
   exit 1
 fi
 
-# ── Step 1: Build XCFramework ──
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  Step 1/5: Building XCFramework"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+if [[ "${RELEASE_TYPE}" == "binary" ]]; then
+  TOTAL_STEPS=5
+else
+  TOTAL_STEPS=3
+fi
+STEP=0
 
-# Ensure we build from source, not from a stale binary target
-sed -i '' 's/^let useBinaryTarget = true/let useBinaryTarget = false/' "${PACKAGE_SWIFT}"
+# ════════════════════════════════════════════════
+#  Binary release steps
+# ════════════════════════════════════════════════
+if [[ "${RELEASE_TYPE}" == "binary" ]]; then
 
-cd "${SCRIPT_DIR}"
-./build-xcframework.sh
+  # ── Build XCFramework ──
+  STEP=$((STEP + 1))
+  echo ""
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "  Step ${STEP}/${TOTAL_STEPS}: Building XCFramework"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-if [ ! -f "${ZIP_PATH}" ]; then
-  echo "❌ Build failed — ${ZIP_PATH} not found."
-  exit 1
+  # Ensure we build from source, not from a stale binary target
+  sed -i '' 's/^let useBinaryTarget = true/let useBinaryTarget = false/' "${PACKAGE_SWIFT}"
+
+  cd "${SCRIPT_DIR}"
+  ./build-xcframework.sh
+
+  if [ ! -f "${ZIP_PATH}" ]; then
+    echo "❌ Build failed — ${ZIP_PATH} not found."
+    exit 1
+  fi
+
+  # ── Compute checksum ──
+  STEP=$((STEP + 1))
+  echo ""
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "  Step ${STEP}/${TOTAL_STEPS}: Computing checksum"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  CHECKSUM=$(swift package compute-checksum "${ZIP_PATH}")
+  echo "  Checksum: ${CHECKSUM}"
+
+  # ── Update Package.swift for binary ──
+  STEP=$((STEP + 1))
+  echo ""
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "  Step ${STEP}/${TOTAL_STEPS}: Updating Package.swift"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+  sed -i '' 's/^let useBinaryTarget = false/let useBinaryTarget = true/' "${PACKAGE_SWIFT}"
+  sed -i '' "s|^let binaryURL = .*|let binaryURL = \"${RELEASE_URL}\"|" "${PACKAGE_SWIFT}"
+  sed -i '' "s|^let binaryChecksum = .*|let binaryChecksum = \"${CHECKSUM}\"|" "${PACKAGE_SWIFT}"
+
+  echo "  ✅ Package.swift updated"
+  echo "    useBinaryTarget = true"
+  echo "    binaryURL       = ${RELEASE_URL}"
+  echo "    binaryChecksum  = ${CHECKSUM}"
+
 fi
 
-# ── Step 2: Compute checksum ──
+# ════════════════════════════════════════════════
+#  Source release steps
+# ════════════════════════════════════════════════
+if [[ "${RELEASE_TYPE}" == "source" ]]; then
+
+  # ── Update Package.swift for source ──
+  STEP=$((STEP + 1))
+  echo ""
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "  Step ${STEP}/${TOTAL_STEPS}: Updating Package.swift"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+  sed -i '' 's/^let useBinaryTarget = true/let useBinaryTarget = false/' "${PACKAGE_SWIFT}"
+
+  echo "  ✅ Package.swift updated"
+  echo "    useBinaryTarget = false"
+
+fi
+
+# ════════════════════════════════════════════════
+#  Common: commit, tag, push, GitHub release
+# ════════════════════════════════════════════════
+
+# ── Commit and tag ──
+STEP=$((STEP + 1))
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  Step 2/5: Computing checksum"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-CHECKSUM=$(swift package compute-checksum "${ZIP_PATH}")
-echo "  Checksum: ${CHECKSUM}"
-
-# ── Step 3: Update Package.swift ──
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  Step 3/5: Updating Package.swift"
+echo "  Step ${STEP}/${TOTAL_STEPS}: Committing and tagging"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-# Update useBinaryTarget to true
-sed -i '' 's/^let useBinaryTarget = false/let useBinaryTarget = true/' "${PACKAGE_SWIFT}"
+if [[ "${RELEASE_TYPE}" == "binary" ]]; then
+  COMMIT_MSG="Release ${VERSION} — binary XCFramework distribution"
+else
+  COMMIT_MSG="Release ${VERSION} — source distribution"
+fi
 
-# Update the binary URL
-sed -i '' "s|^let binaryURL = .*|let binaryURL = \"${RELEASE_URL}\"|" "${PACKAGE_SWIFT}"
-
-# Update the checksum
-sed -i '' "s|^let binaryChecksum = .*|let binaryChecksum = \"${CHECKSUM}\"|" "${PACKAGE_SWIFT}"
-
-echo "  ✅ Package.swift updated"
-echo ""
-echo "  useBinaryTarget = true"
-echo "  binaryURL       = ${RELEASE_URL}"
-echo "  binaryChecksum  = ${CHECKSUM}"
-
-# ── Step 4: Commit and tag ──
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  Step 4/5: Committing and tagging"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 git add "${PACKAGE_SWIFT}"
-git commit -m "Release ${VERSION} — binary XCFramework distribution"
+git commit -m "${COMMIT_MSG}"
 git tag "${VERSION}"
 
 # Push to the source remote (DoubleDogSoftware/TCALibrary)
@@ -204,20 +272,29 @@ git push release main --tags --force
 
 echo "  ✅ Pushed commit and tag ${VERSION} to both remotes"
 
-# ── Step 5: Create GitHub Release ──
+# ── Create GitHub Release ──
+STEP=$((STEP + 1))
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  Step 5/5: Creating GitHub Release"
+echo "  Step ${STEP}/${TOTAL_STEPS}: Creating GitHub Release"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-gh release create "${VERSION}" \
-  "${ZIP_PATH}" \
-  --repo "${RELEASE_REPO}" \
-  --title "${VERSION}" \
-  --notes "TCALibrary ${VERSION} binary XCFramework release."
+
+if [[ "${RELEASE_TYPE}" == "binary" ]]; then
+  gh release create "${VERSION}" \
+    "${ZIP_PATH}" \
+    --repo "${RELEASE_REPO}" \
+    --title "${VERSION}" \
+    --notes "TCALibrary ${VERSION} binary XCFramework release."
+else
+  gh release create "${VERSION}" \
+    --repo "${RELEASE_REPO}" \
+    --title "${VERSION}" \
+    --notes "TCALibrary ${VERSION} source release."
+fi
 
 echo ""
 echo "════════════════════════════════════════════════"
-echo "🎉 Release ${VERSION} published!"
+echo "🎉 Release ${VERSION} published! (${RELEASE_TYPE})"
 echo ""
 echo "  GitHub Release: https://github.com/${RELEASE_REPO}/releases/tag/${VERSION}"
 echo ""
