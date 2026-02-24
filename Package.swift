@@ -13,7 +13,7 @@ import PackageDescription
 //     Set useBinaryTarget = true and update the url + checksum
 //     after running ./build-xcframework.sh
 // ──────────────────────────────────────────────────────────────
-let useBinaryTarget = true
+let useBinaryTarget = false
 
 // Update these after running ./build-xcframework.sh
 let binaryURL = "https://github.com/croyfoo/TCALibrary/releases/download/0.1.36/TCALibrary.xcframework.zip"
@@ -25,12 +25,18 @@ let package = Package(
     .iOS(.v18),
     .macOS(.v15)
   ],
-  products: [
-    .library(
-      name: "TCALibrary",
-      type: .dynamic,
-      targets: ["TCALibrary"]),
-  ],
+  products: useBinaryTarget
+    ? [
+      .library(
+        name: "TCALibrary",
+        targets: ["TCALibrary"]),
+    ]
+    : [
+      .library(
+        name: "TCALibrary",
+        type: .dynamic,
+        targets: ["TCALibrary"]),
+    ],
   dependencies: useBinaryTarget ? [] : [
     .package(url: "https://github.com/pointfreeco/swift-composable-architecture", .upToNextMajor(from: "1.23.0")),
     .package(url: "https://github.com/croyfoo/DDSCommon", .upToNextMajor(from: "1.0.0")),
