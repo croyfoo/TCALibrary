@@ -76,10 +76,29 @@ fi
 
 # ── Prompt for version ──
 CURRENT_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "none")
+
+# Compute a suggested next version by incrementing the patch number
+SUGGESTED_VERSION=""
+if [[ "${CURRENT_TAG}" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+  MAJOR="${BASH_REMATCH[1]}"
+  MINOR="${BASH_REMATCH[2]}"
+  PATCH="${BASH_REMATCH[3]}"
+  SUGGESTED_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
+fi
+
 echo ""
 echo "📋 Current latest tag: ${CURRENT_TAG}"
+if [[ -n "${SUGGESTED_VERSION}" ]]; then
+  echo "   Suggested next:     ${SUGGESTED_VERSION}"
+fi
 echo ""
-read -rp "Enter the version number for this release (e.g. 1.0.0): " VERSION
+
+if [[ -n "${SUGGESTED_VERSION}" ]]; then
+  read -rp "Enter the version number for this release [${SUGGESTED_VERSION}]: " VERSION
+  VERSION="${VERSION:-${SUGGESTED_VERSION}}"
+else
+  read -rp "Enter the version number for this release (e.g. 1.0.0): " VERSION
+fi
 
 if [[ -z "${VERSION}" ]]; then
   echo "❌ Version cannot be empty."
