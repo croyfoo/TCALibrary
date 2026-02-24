@@ -22,9 +22,9 @@ set -euo pipefail
 FRAMEWORK_NAME="TCALibrary"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Derive owner/repo from the first git remote URL
-REPO=$(git -C "${SCRIPT_DIR}" remote get-url "$(git -C "${SCRIPT_DIR}" remote | head -1)" \
-  | sed -E 's#(.*github\.com[:/])##; s#\.git$##')
+# Release repo — where the GitHub Release and binary artifact are published.
+# Consumers add this repo as their SPM dependency.
+RELEASE_REPO="croyfoo/TCALibrary"
 PACKAGE_SWIFT="${SCRIPT_DIR}/Package.swift"
 BUILD_DIR="${SCRIPT_DIR}/build"
 ZIP_PATH="${BUILD_DIR}/${FRAMEWORK_NAME}.xcframework.zip"
@@ -98,12 +98,12 @@ if git rev-parse "${VERSION}" &> /dev/null; then
   exit 1
 fi
 
-RELEASE_URL="https://github.com/${REPO}/releases/download/${VERSION}/${FRAMEWORK_NAME}.xcframework.zip"
+RELEASE_URL="https://github.com/${RELEASE_REPO}/releases/download/${VERSION}/${FRAMEWORK_NAME}.xcframework.zip"
 
 echo ""
 echo "════════════════════════════════════════════════"
 echo "  Version:  ${VERSION}"
-echo "  Repo:     ${REPO}"
+echo "  Release:  ${RELEASE_REPO}"
 echo "  URL:      ${RELEASE_URL}"
 echo "════════════════════════════════════════════════"
 echo ""
@@ -178,7 +178,7 @@ echo "  Step 5/5: Creating GitHub Release"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 gh release create "${VERSION}" \
   "${ZIP_PATH}" \
-  --repo "${REPO}" \
+  --repo "${RELEASE_REPO}" \
   --title "${VERSION}" \
   --notes "TCALibrary ${VERSION} binary XCFramework release."
 
@@ -186,9 +186,9 @@ echo ""
 echo "════════════════════════════════════════════════"
 echo "🎉 Release ${VERSION} published!"
 echo ""
-echo "  GitHub Release: https://github.com/${REPO}/releases/tag/${VERSION}"
+echo "  GitHub Release: https://github.com/${RELEASE_REPO}/releases/tag/${VERSION}"
 echo ""
 echo "  Consumers can add this dependency:"
 echo ""
-echo "    .package(url: \"https://github.com/${REPO}\", from: \"${VERSION}\")"
+echo "    .package(url: \"https://github.com/${RELEASE_REPO}\", from: \"${VERSION}\")"
 echo "════════════════════════════════════════════════"
