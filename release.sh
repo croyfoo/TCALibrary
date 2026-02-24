@@ -31,7 +31,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Release repo — where the GitHub Release and binary artifact are published.
 # Consumers add this repo as their SPM dependency.
-RELEASE_REPO="croyfoo/TCALibrary"
+RELEASE_REPO="DoubleDogSoftware/TCALibrary"
 PACKAGE_SWIFT="${SCRIPT_DIR}/Package.swift"
 BUILD_DIR="${SCRIPT_DIR}/build"
 ZIP_PATH="${BUILD_DIR}/${FRAMEWORK_NAME}.xcframework.zip"
