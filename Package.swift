@@ -3,6 +3,22 @@
 
 import PackageDescription
 
+// ──────────────────────────────────────────────────────────────
+// Toggle between source and binary distribution:
+//
+//   • For development / building from source:
+//     Set useBinaryTarget = false
+//
+//   • For binary distribution (XCFramework):
+//     Set useBinaryTarget = true and update the url + checksum
+//     after running ./build-xcframework.sh
+// ──────────────────────────────────────────────────────────────
+let useBinaryTarget = false
+
+// Update these after running ./build-xcframework.sh
+let binaryURL = "https://github.com/croyfoo/TCALibrary/releases/download/<VERSION>/TCALibrary.xcframework.zip"
+let binaryChecksum = "<CHECKSUM>"
+
 let package = Package(
   name: "TCALibrary",
   platforms: [
@@ -10,32 +26,41 @@ let package = Package(
     .macOS(.v15)
   ],
   products: [
-    // Products define the executables and libraries a package produces, making them visible to other packages.
     .library(
       name: "TCALibrary",
+      type: .dynamic,
       targets: ["TCALibrary"]),
   ],
-  dependencies: [
+  dependencies: useBinaryTarget ? [] : [
     .package(url: "https://github.com/pointfreeco/swift-composable-architecture", .upToNextMajor(from: "1.23.0")),
-    .package(url: "https://github.com/DoubleDogSoftware/CommonLib", .upToNextMajor(from: "1.0.0")),
-//    .package(url: "https://github.com/pointfreeco/swift-dependencies", .upToNextMajor(from: "1.6.0")),
-//    .package(url: "https://github.com/pointfreeco/swift-gen", from: "0.3.1"),
-//    .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay", from: "0.8.4")
+    .package(url: "https://github.com/croyfoo/DDSCommon", .upToNextMajor(from: "1.0.0")),
   ],
-  targets: [
-    // Targets are the basic building blocks of a package, defining a module or a test suite.
-    // Targets can depend on other targets in this package and products from dependencies.
-    .target(
-      name: "TCALibrary",
-      dependencies: [
-        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
-        .product(name: "CommonLib", package: "CommonLib"),
-        // Add any other product dependencies here
-      ]
-    ),
-    .testTarget(
-      name: "TCALibraryTests",
-      dependencies: ["TCALibrary"]
-    ),
-  ]
+  targets: useBinaryTarget
+    ? [
+      .binaryTarget(
+        name: "TCALibrary",
+        url: binaryURL,
+        checksum: binaryChecksum
+      ),
+    ]
+    : [
+      .target(
+        name: "TCALibrary",
+        dependencies: [
+          .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+          .product(name: "DDSCommon", package: "DDSCommon"),
+        ],
+        swiftSettings: [
+          .unsafeFlags([
+            "-enable-library-evolution",
+            "-emit-module-interface",
+            "-no-verify-emitted-module-interface",
+          ]),
+        ]
+      ),
+      .testTarget(
+        name: "TCALibraryTests",
+        dependencies: ["TCALibrary"]
+      ),
+    ]
 )
