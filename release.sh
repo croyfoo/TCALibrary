@@ -31,7 +31,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Release repo — where the GitHub Release and binary artifact are published.
 # Consumers add this repo as their SPM dependency.
-RELEASE_REPO="DoubleDogSoftware/TCALibrary"
+RELEASE_REPO="DoubleDogSoftware/${FRAMEWORK_NAME}"
 PACKAGE_SWIFT="${SCRIPT_DIR}/Package.swift"
 BUILD_DIR="${SCRIPT_DIR}/build"
 ZIP_PATH="${BUILD_DIR}/${FRAMEWORK_NAME}.xcframework.zip"
@@ -279,12 +279,12 @@ if [[ "${RELEASE_TYPE}" == "binary" ]]; then
     "${ZIP_PATH}" \
     --repo "${RELEASE_REPO}" \
     --title "${VERSION}" \
-    --notes "TCALibrary ${VERSION} binary XCFramework release."
+    --notes "${FRAMEWORK_NAME} ${VERSION} binary XCFramework release."
 else
   gh release create "${VERSION}" \
     --repo "${RELEASE_REPO}" \
     --title "${VERSION}" \
-    --notes "TCALibrary ${VERSION} source release."
+    --notes "${FRAMEWORK_NAME} ${VERSION} source release."
 fi
 
 echo ""
