@@ -12,7 +12,6 @@ let package = Package(
   products: [
     .library(
       name: "TCALibrary",
-      type: .dynamic,
       targets: ["TCALibrary"]),
   ],
   dependencies: [
